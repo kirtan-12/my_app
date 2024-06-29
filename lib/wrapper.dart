@@ -1,3 +1,4 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -17,18 +18,21 @@ class _WrapperState extends State<Wrapper> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder(
+      body: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context,snapshot){
-          if(snapshot.hasData){
-            print(snapshot.data);
-            if(snapshot.data!.emailVerified){
-              return Homepage();
+          if(snapshot.connectionState == ConnectionState.active){
+            if (snapshot.hasData && snapshot.data != null){
+              if(snapshot.data!.emailVerified){
+                return const Homepage();
+              }else{
+                return const Verify();
+              }
             }else{
-             return Verify();
+              return const Login();
             }
           }else{
-            return Login();
+            return const Center(child: CircularProgressIndicator());
           }
         },
       ),

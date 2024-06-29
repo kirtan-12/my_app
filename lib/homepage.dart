@@ -11,16 +11,17 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   final user = FirebaseAuth.instance.currentUser;
 
-
   signout()async{
     await FirebaseAuth.instance.signOut();
   }
   @override
   Widget build(BuildContext context) {
+    // Use the company parameter here
     return Scaffold(
       appBar: AppBar(title: Text("Homepage"),),
       body: Center(
         child: Text('${user!.email}'),
+
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: (()=>signout()),
