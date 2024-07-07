@@ -116,10 +116,15 @@ class _SearchpageState extends State<Searchpage> {
                 margin: EdgeInsets.only(top: 20),
                 child: ElevatedButton(
                   onPressed: (){
-                    if(_searchResult != null && _searchResult.isNotEmpty) {
+                    // if(_searchResult != null && _searchResult.isNotEmpty)
+                    if(_isSearchResultClicked){
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (context) => const KeyboardVisibilityProvider(child: Wrapper())),
+                          builder: (context) => Login(
+                              companyName: _searchResult[_isSelected.indexOf(true)]['Company_Name'],
+                            //builder: (context) => const KeyboardVisibilityProvider(child: Wrapper())),
+                          ),
+                        ),
                       );
                     }
                   },
@@ -149,7 +154,7 @@ class _SearchpageState extends State<Searchpage> {
       setState(() {}); // Update the UI
     } else {
       await _firestore
-          .collection('Users')
+          .collection('RegisteredCompany')
           .where('Company_Name', isGreaterThanOrEqualTo: value)
           .where('Company_Name', isLessThanOrEqualTo: '$value\uf8ff')
           .get()

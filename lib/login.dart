@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:my_app/forgot.dart';
+import 'package:my_app/homepage.dart';
 import 'package:my_app/signup.dart';
 
 
 class Login extends StatefulWidget {
-  const Login({super.key});
+  final String companyName;
+  const Login({required this.companyName,super.key});
 
   @override
   State<Login> createState() => _LoginState();
@@ -34,6 +36,12 @@ class _LoginState extends State<Login> {
     });
     try{
       await FirebaseAuth.instance.signInWithEmailAndPassword(email: email.text, password: password.text);
+      // Navigate to homepage
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => Homepage()),
+          (Route<dynamic> route) => false,
+      );
     }on FirebaseAuthException catch(e){
       Get.snackbar("Message", e.code);
     }catch(e){
@@ -46,82 +54,91 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isKeyboardVisible = KeyboardVisibilityProvider.isKeyboardVisible(context);
+    //final bool isKeyboardVisible = KeyboardVisibilityProvider.isKeyboardVisible(context);
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
 
-    return isloading ? Center(child: CircularProgressIndicator(),) : Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Column(
-          children: [
-            isKeyboardVisible? SizedBox(height: screenHeight / 30,) :Container(
-              height: screenHeight / 2.5,
-              width: screenWidth,
-              decoration: BoxDecoration(
-                color: primary,
-                borderRadius: BorderRadius.only(
-                  bottomRight: Radius.circular(70),
-                ),
-              ),
-              child: Center(
-                child: Icon(Icons.person, color: Colors.white, size: screenWidth / 5,),
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.only(
-                  top: screenHeight / 15,
-                  bottom: screenHeight / 20
-              ),
-              child: Text(
-                "Login",
-                style: TextStyle(
-                  fontSize: screenHeight / 30,
-                ),
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  fieldTitle("Employee ID"),
-                  customField("Enter your ID", idController,false),
-                  fieldTitle("Password"),
-                  customFielde("Enter your password", passController,true),
-
-                  Container(
-                    width: screenWidth,
-                    margin: EdgeInsets.only(top: screenHeight/30),
-                    height: 60,
-                    decoration: BoxDecoration(
-                      //color: primary,
-                      borderRadius: const BorderRadius.all(Radius.circular(25))
-                    ),
-                    child: ElevatedButton(onPressed: (() => signIn()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                      ),
-                      child: Center(
-                        child: Text("Login",
-                          style: TextStyle(fontSize: screenWidth/25,
-                            color: Colors.white,
-                            letterSpacing: 2,
-                          ),
+    return isloading ? Center(child: CircularProgressIndicator(),) : KeyboardVisibilityProvider(
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: Column(
+              children: [
+                KeyboardVisibilityBuilder(
+                  builder: (context, isKeyboardVisible){
+                    return isKeyboardVisible? SizedBox(height: screenHeight / 30,) :Container(
+                      height: screenHeight / 2.5,
+                      width: screenWidth,
+                      decoration: BoxDecoration(
+                        color: primary,
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(70),
                         ),
                       ),
+                      child: Center(
+                        child: Icon(Icons.person, color: Colors.white, size: screenWidth / 5,),
+                      ),
+                    );
+                  }
+                ),
+                Container(
+                  margin: EdgeInsets.only(
+                      top: screenHeight / 30,
+                      bottom: screenHeight / 30
+                  ),
+                  child: Text(
+                    "Login for ${widget.companyName}",
+                    style: TextStyle(
+                      fontSize: screenHeight / 30,
                     ),
-                  )
-                ],
-              ),
-            ),
-            //SizedBox(height: 30,),
-            ElevatedButton(onPressed: (() => Get.to(Signup())),
-                child: Text("Register Now")),
-            //SizedBox(height: 30,),
-            ElevatedButton(onPressed: (() => Get.to(Forgot())),
-                child: Text("Forgot Password ?"))
-          ],
+                  ),
+                ),
+                Container(
+                  alignment: Alignment.centerLeft,
+                  margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      fieldTitle("Employee ID"),
+                      customField("Enter your ID", email,false),
+                      fieldTitle("Password"),
+                      customFielde("Enter your password", password,true),
+
+                      Container(
+                        width: screenWidth,
+                        margin: EdgeInsets.only(top: screenHeight/30),
+                        height: 60,
+                        decoration: BoxDecoration(
+                          //color: primary,
+                          borderRadius: const BorderRadius.all(Radius.circular(25))
+                        ),
+                        child: ElevatedButton(onPressed: (() => signIn()),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: Center(
+                            child: Text("Login",
+                              style: TextStyle(fontSize: screenWidth/25,
+                                color: Colors.white,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 190),
+                  child: TextButton(onPressed: (()=> Get.to(Forgot())), child: Text("Forgot Password?")),
+                ),
+                // ElevatedButton(onPressed: (() => Get.to(Signup())),
+                //     child: Text("Register Now")),
+                TextButton(onPressed: (()=> Get.to(Signup())), child: Text("Register Now")),
+                // ElevatedButton(onPressed: (() => Get.to(Forgot())),
+                //     child: Text("Forgot Password ?")),
+              ],
+          ),
         ),
     );
   }
@@ -166,7 +183,7 @@ class _LoginState extends State<Login> {
             child: Padding(
               padding: EdgeInsets.only(right: screenWidth / 15),
               child: TextFormField(
-                controller: email,
+                controller: controller,
                 enableSuggestions: false,
                 autocorrect: false,
                 decoration: InputDecoration(
@@ -213,7 +230,7 @@ class _LoginState extends State<Login> {
             child: Padding(
               padding: EdgeInsets.only(right: screenWidth / 15),
               child: TextFormField(
-                controller: password,
+                controller: controller,
                 enableSuggestions: false,
                 autocorrect: false,
                 decoration: InputDecoration(

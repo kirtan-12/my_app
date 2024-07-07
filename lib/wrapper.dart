@@ -29,7 +29,7 @@ class _WrapperState extends State<Wrapper> {
                 return const Verify();
               }
             }else{
-              return const Login();
+              return Login(companyName: 'Your Company',);
             }
           }else{
             return const Center(child: CircularProgressIndicator());

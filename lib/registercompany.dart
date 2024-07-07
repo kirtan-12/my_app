@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:my_app/searchpage.dart';
 
@@ -28,7 +29,7 @@ class _RegistercompanyState extends State<Registercompany> {
       print("Enter Required Fields");
     }
     else{
-      FirebaseFirestore.instance.collection("Users").doc(Person).set({
+      FirebaseFirestore.instance.collection("RegisteredCompany").doc(Person).set({
         "Person_Name":Person,
         "Mobile_Number":Contact,
         "Company_Name":Company_name,
@@ -225,6 +226,10 @@ class _RegistercompanyState extends State<Registercompany> {
                 ),
                 maxLines: 1,
                 obscureText: obscure,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  _TenDigitFormatter(),
+                ],
               ),
             ),
           ),
@@ -276,3 +281,20 @@ class _RegistercompanyState extends State<Registercompany> {
   }
 
 }
+
+class _TenDigitFormatter extends TextInputFormatter{
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ){
+    if(newValue.text.length > 10){
+      return oldValue;
+    }
+    return newValue;
+  }
+}
+
+
+
+

@@ -1,5 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:my_app/searchpage.dart';
+
+import 'login.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -13,6 +16,11 @@ class _HomepageState extends State<Homepage> {
 
   signout()async{
     await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Searchpage()),
+          (Route<dynamic> route) => false,
+    );
   }
   @override
   Widget build(BuildContext context) {
