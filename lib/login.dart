@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -36,6 +37,24 @@ class _LoginState extends State<Login> {
     });
     try{
       await FirebaseAuth.instance.signInWithEmailAndPassword(email: email.text, password: password.text);
+      //Get the user's profile
+      final userDoc = await FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .doc('${widget.companyName}')
+          .collection('users')
+          .doc(email.text)
+          .get();
+      //Check if company name in user's profile
+
+      // if (!userDoc.exists) {
+      //   Get.snackbar("Message", "You are not authorized to access this company");
+      //   return;
+      // }
+
+      if (userDoc['companyName']!= widget.companyName) {
+        Get.snackbar("Message","You are not authorized to access this company");
+        return ;
+      }
       // Navigate to homepage
       Navigator.pushAndRemoveUntil(
         context,
@@ -134,7 +153,7 @@ class _LoginState extends State<Login> {
                 ),
                 // ElevatedButton(onPressed: (() => Get.to(Signup())),
                 //     child: Text("Register Now")),
-                TextButton(onPressed: (()=> Get.to(Signup())), child: Text("Register Now")),
+                TextButton(onPressed: (()=> Get.to(Signup(companyName: widget.companyName,))), child: Text("Register Now")),
                 // ElevatedButton(onPressed: (() => Get.to(Forgot())),
                 //     child: Text("Forgot Password ?")),
               ],

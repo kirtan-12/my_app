@@ -121,10 +121,8 @@ class _SearchpageState extends State<Searchpage> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => Login(
-                              companyName: _searchResult[_isSelected.indexOf(true)]['Company_Name'],
-                            //builder: (context) => const KeyboardVisibilityProvider(child: Wrapper())),
-                          ),
-                        ),
+                              companyName: _searchResult[_isSelected.indexOf(true)]['Company_Name'],)
+                        ),  //builder: (context) => const KeyboardVisibilityProvider(child: Wrapper())),
                       );
                     }
                   },

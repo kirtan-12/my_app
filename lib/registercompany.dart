@@ -29,8 +29,8 @@ class _RegistercompanyState extends State<Registercompany> {
       print("Enter Required Fields");
     }
     else{
-      FirebaseFirestore.instance.collection("RegisteredCompany").doc(Person).set({
-        "Person_Name":Person,
+      FirebaseFirestore.instance.collection("RegisteredCompany").doc(Company_name).set({
+        "Owner_Name":Person,
         "Mobile_Number":Contact,
         "Company_Name":Company_name,
         "Address":Address,

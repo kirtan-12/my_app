@@ -11,7 +11,8 @@ import 'package:my_app/login.dart';
 import 'package:my_app/wrapper.dart';
 
 class Signup extends StatefulWidget {
-  const Signup({super.key});
+  final String companyName;
+  const Signup({required this.companyName,super.key});
 
   @override
   State<Signup> createState() => _SignupState();
@@ -38,13 +39,20 @@ class _SignupState extends State<Signup> {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  void _showError(String message) {
+    // Show error message to the user using a SnackBar or Dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   signup()async{
     if (firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
         email.text.isEmpty ||
         mobileNumberController.text.isEmpty ||
         password.text.isEmpty) {
-      print('Please fill in all fields');
+      _showError('Please fill in all fields');
       return;
     }
     try {
@@ -53,7 +61,14 @@ class _SignupState extends State<Signup> {
       final bytes = utf8.encode(password.text);
       final digest = sha256.convert(bytes);
       final hashedPassword = digest.toString();
-      await _firestore.collection('users').doc(email.text).set({
+      // Get the selected company name
+
+      await _firestore
+          .collection('RegisteredCompany')
+          .doc('${widget.companyName}')
+          .collection('users')
+          .doc(email.text)
+          .set({
         'first_name': firstNameController.text,
         'last_name': lastNameController.text,
         'email': email.text,
@@ -64,12 +79,12 @@ class _SignupState extends State<Signup> {
       Get.offAll(Wrapper());
     }on FirebaseAuthException catch(e){
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        _showError('The password provided is too weak.');
       } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+        _showError('The account already exists for that email.');
       }
     } catch (e) {
-      print(e);
+      _showError('An error occurred: ${e.toString()}');
     }
   }
 
@@ -83,7 +98,7 @@ class _SignupState extends State<Signup> {
       appBar: AppBar(title: Text("Sign Up"),),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
+        child: ListView(
           children: [
             Container(
               alignment: Alignment.centerLeft,
