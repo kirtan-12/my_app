@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 
 class Todayscreen extends StatefulWidget {
-  const Todayscreen({super.key});
+  final String companyName;
+  const Todayscreen({required this.companyName,super.key});
 
   @override
   State<Todayscreen> createState() => _TodayscreenState();
@@ -15,6 +18,32 @@ class _TodayscreenState extends State<Todayscreen> {
   double screenWidth=0;
 
   Color primary = const Color(0xFFEF444C);
+
+  String _username = '';
+  @override
+  void initState() {
+    super.initState();
+    _getUsername();
+  }
+
+  Future<void> _getUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final userEmail = user?.email;
+    final companyDocRef = FirebaseFirestore.instance
+        .collection('RegisteredCompany')
+        .doc('${widget.companyName}');
+
+    final userDocRef = companyDocRef.collection('users').doc(userEmail);
+    final userDoc = await userDocRef.get();
+
+    final username = userDoc.data()?['first_name'];
+    print('Welcome me , $username');
+    setState(() {
+      _username = username?? ''; // Update _username here
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +70,7 @@ class _TodayscreenState extends State<Todayscreen> {
             Container(
               alignment: Alignment.centerLeft,
               child: Text(
-                "Employee",
+                "Employee, $_username",
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: screenWidth / 15,

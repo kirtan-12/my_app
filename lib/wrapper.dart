@@ -24,7 +24,7 @@ class _WrapperState extends State<Wrapper> {
           if(snapshot.connectionState == ConnectionState.active){
             if (snapshot.hasData && snapshot.data != null){
               if(snapshot.data!.emailVerified){
-                return const Homepage();
+                return Homepage(companyName: "Company" );
               }else{
                 return const Verify();
               }

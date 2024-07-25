@@ -31,6 +31,7 @@ class _LoginState extends State<Login> {
 
   bool isloading = false;
 
+
   signIn()async{
     setState(() {
       isloading=true;
@@ -44,12 +45,16 @@ class _LoginState extends State<Login> {
           .collection('users')
           .doc(email.text)
           .get();
+
+      final username = userDoc.data()?['first_name'];
+      print('Welcome, $username');
       //Check if company name in user's profile
 
       // if (!userDoc.exists) {
       //   Get.snackbar("Message", "You are not authorized to access this company");
       //   return;
       // }
+
 
       if (userDoc['companyName']!= widget.companyName) {
         Get.snackbar("Message","You are not authorized to access this company");
@@ -58,7 +63,7 @@ class _LoginState extends State<Login> {
       // Navigate to homepage
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => Homepage()),
+        MaterialPageRoute(builder: (context) => Homepage(companyName: widget.companyName)),
           (Route<dynamic> route) => false,
       );
     }on FirebaseAuthException catch(e){

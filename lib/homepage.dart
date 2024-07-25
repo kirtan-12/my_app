@@ -10,7 +10,8 @@ import 'calendarscreen.dart';
 import 'login.dart';
 
 class Homepage extends StatefulWidget {
-  const Homepage({Key? Key}) : super(key: Key);
+  final String companyName;
+  const Homepage({required this.companyName,super.key});
 
 
   @override
@@ -53,9 +54,9 @@ class _HomepageState extends State<Homepage> {
     return Scaffold(
         body: IndexedStack(
           index: currentIndex,
-          children: const [
+          children:  [
             Calendarscreen(),
-            Todayscreen(),
+            Todayscreen(companyName: widget.companyName),
             Profilescreen(),
           ],
         ),
