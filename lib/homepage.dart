@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -22,18 +23,17 @@ class _HomepageState extends State<Homepage> {
   double screenHeight=0;
   double screenWidth=0;
 
+  String email = '';
+
   Color primary = const Color(0xFFEF444C);
 
-  int currentIndex = 0;
+  int currentIndex = 1;
 
   List<IconData> navigationIcon = [
     FontAwesomeIcons.calendarDays,
     FontAwesomeIcons.check,
     FontAwesomeIcons.user,
   ];
-
-
-
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -45,6 +45,28 @@ class _HomepageState extends State<Homepage> {
           (Route<dynamic> route) => false,
     );
   }
+
+  @override
+  void initState() {
+    super.initState();
+    getId();
+  }
+
+  void getId() async{
+    final user = FirebaseAuth.instance.currentUser;
+    final userEmail = user?.email;
+
+    QuerySnapshot snap = await FirebaseFirestore.instance
+        .collection("RegisteredCompany")
+        .doc('${widget.companyName}')
+        .collection("users")
+        .where('email', isEqualTo: userEmail)
+        .get();
+    setState(() {
+
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
@@ -55,9 +77,9 @@ class _HomepageState extends State<Homepage> {
         body: IndexedStack(
           index: currentIndex,
           children:  [
-            Calendarscreen(),
-            Todayscreen(companyName: widget.companyName),
-            Profilescreen(),
+            new Calendarscreen(companyName: widget.companyName),
+            new Todayscreen(companyName: widget.companyName),
+            new Profilescreen(),
           ],
         ),
         bottomNavigationBar: Container(

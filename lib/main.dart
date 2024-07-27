@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 import 'package:my_app/searchpage.dart';
 import 'package:my_app/wrapper.dart';
 
@@ -28,6 +29,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: Searchpage(),
+      localizationsDelegates: const [
+        MonthYearPickerLocalizations.delegate,
+      ],
     );
   }
 }
