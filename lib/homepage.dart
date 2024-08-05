@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:my_app/profilescreen.dart';
 import 'package:my_app/searchpage.dart';
+import 'package:my_app/services/location_service.dart';
 import 'package:my_app/todayscreen.dart';
 
 
 import 'calendarscreen.dart';
 import 'login.dart';
+import 'model/user.dart';
 
 class Homepage extends StatefulWidget {
   final String companyName;
@@ -49,23 +51,60 @@ class _HomepageState extends State<Homepage> {
   @override
   void initState() {
     super.initState();
-    getId();
+    _startLocationService();
+    _getCredentials();
+    // getId();
   }
 
-  void getId() async{
+  void _getCredentials() async {
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
+    final companyDocRef = FirebaseFirestore.instance
+        .collection('RegisteredCompany')
+        .doc('${widget.companyName}');
 
-    QuerySnapshot snap = await FirebaseFirestore.instance
-        .collection("RegisteredCompany")
-        .doc('${widget.companyName}')
-        .collection("users")
-        .where('email', isEqualTo: userEmail)
-        .get();
+    final userDocRef = companyDocRef.collection('users').doc(userEmail);
+    final userDoc = await userDocRef.get();
+
     setState(() {
-
+      Users.canEdit = userDoc['canEdit'];
+      Users.firstName = userDoc['first_name'];
+      Users.lastName = userDoc['last_name'];
+      Users.birthDate = userDoc['birthDate'];
+      Users.address = userDoc['address'];
     });
   }
+
+  void _startLocationService() async{
+    LocationService().initialize();
+
+    LocationService().getLongitude().then((value){
+      setState(() {
+        Users.long = value!;
+      });
+
+      LocationService().getLatitude().then((value){
+        setState(() {
+         Users.lat = value!;
+        });
+      });
+    });
+  }
+
+  // void getId() async{
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   final userEmail = user?.email;
+  //
+  //   QuerySnapshot snap = await FirebaseFirestore.instance
+  //       .collection("RegisteredCompany")
+  //       .doc('${widget.companyName}')
+  //       .collection("users")
+  //       .where('email', isEqualTo: userEmail)
+  //       .get();
+  //   setState(() {
+  //
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +118,7 @@ class _HomepageState extends State<Homepage> {
           children:  [
             new Calendarscreen(companyName: widget.companyName),
             new Todayscreen(companyName: widget.companyName),
-            new Profilescreen(),
+            new Profilescreen(companyName: widget.companyName),
           ],
         ),
         bottomNavigationBar: Container(

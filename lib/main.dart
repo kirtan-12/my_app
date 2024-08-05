@@ -5,6 +5,7 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:month_year_picker/month_year_picker.dart';
 import 'package:my_app/searchpage.dart';
 import 'package:my_app/wrapper.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();

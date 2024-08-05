@@ -1,12 +1,17 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:my_app/login.dart';
 import 'package:my_app/wrapper.dart';
 
@@ -22,6 +27,29 @@ class _SignupState extends State<Signup> {
 
 
   String _gender = '';
+  final ImagePicker _picker = ImagePicker();
+  File? _image;
+
+  final firebase_storage.FirebaseStorage _storage = firebase_storage.FirebaseStorage.instance;
+  String? _imageUrl;
+
+  Future<void> captureImages() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image!= null) {
+      setState(() {
+        _image = File(image.path);
+        _uploadImageToFirebaseStorage();
+      });
+    }
+  }
+
+  Future<void> _uploadImageToFirebaseStorage() async {
+    if (_image == null) return;
+
+    final Reference ref = _storage.ref().child('images/${DateTime.now().toString()}.jpg');
+    await ref.putFile(_image!);
+    _imageUrl = await ref.getDownloadURL();
+  }
 
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
@@ -46,7 +74,7 @@ class _SignupState extends State<Signup> {
     );
   }
 
-  signup()async{
+  Future<void> signup()async{
     if (firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
         email.text.isEmpty ||
@@ -61,6 +89,9 @@ class _SignupState extends State<Signup> {
       final bytes = utf8.encode(password.text);
       final digest = sha256.convert(bytes);
       final hashedPassword = digest.toString();
+
+      // Upload image to Firebase Storage and get the download URL
+      await _uploadImageToFirebaseStorage();
       // Get the selected company name
 
       await _firestore
@@ -75,6 +106,7 @@ class _SignupState extends State<Signup> {
         'mobile_number': mobileNumberController.text,
         'password': hashedPassword,
         'gender': _gender,
+        'image_url':_imageUrl,
       });
       Get.offAll(Wrapper());
     }on FirebaseAuthException catch(e){
@@ -100,6 +132,29 @@ class _SignupState extends State<Signup> {
         padding: const EdgeInsets.all(20.0),
         child: ListView(
           children: [
+            Container(
+              alignment: Alignment.center,
+              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+              child: Center(
+                child: Column(
+                  crossAxisAlignment:CrossAxisAlignment.start ,
+                  children: [
+                    _image!= null
+                        ?CircleAvatar(
+                      radius: 60, // adjust the radius as needed
+                      backgroundImage: Image.file(_image!).image,
+                    )
+                        : Icon(Icons.image_rounded, size: 125),
+                    TextButton(onPressed: () {
+                      captureImages(
+                      );
+                    },
+                        child: Text("Take your photo")
+                    ),
+                  ],
+                ),
+              ),
+            ),
             Container(
               alignment: Alignment.centerLeft,
               margin: EdgeInsets.symmetric(

@@ -21,6 +21,17 @@ class _CalendarscreenState extends State<Calendarscreen> {
 
   String _month = DateFormat('MMMM').format(DateTime.now());
 
+  Color _getColor(String status) {
+    switch (status) {
+      case 'Present':
+        return Colors.green;
+      case 'Absent':
+        return Colors.red;
+      default:
+        return Colors.black;
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +152,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
                                   child: Container(
                                     margin: const EdgeInsets.only(),
                                     decoration: BoxDecoration(
-                                      color: primary,
+                                      color: _getColor(snap[index]['status']),
                                       borderRadius: const BorderRadius.all(Radius.circular(20)),
                                     ),
                                     child: Center(
