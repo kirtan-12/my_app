@@ -5,12 +5,12 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:my_app/forgot.dart';
 import 'package:my_app/homepage.dart';
+import 'package:my_app/registercompany.dart';
 import 'package:my_app/signup.dart';
 
 
 class Login extends StatefulWidget {
-  final String companyName;
-  const Login({required this.companyName,super.key});
+  const Login({super.key});
 
   @override
   State<Login> createState() => _LoginState();
@@ -30,9 +30,45 @@ class _LoginState extends State<Login> {
   Color primary = const Color(0xFFEF444C);
 
   bool isloading = false;
+  bool isCompanyLoading = true;
 
+  String? selectedCompany;
+  List<String> companyList = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    fetchCompanies();
+  }
+
+  Future<void> fetchCompanies() async{
+    try {
+      final QuerySnapshot result = await FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .get();
+
+      final List<String> fetchedCompanies = result.docs.map((doc) => doc.id).toList();
+
+      setState(() {
+        companyList = fetchedCompanies;
+        isCompanyLoading = false;
+      });
+      print("Fetched Companies: $fetchedCompanies"); // Log the fetched companies
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load companies");
+      setState(() {
+        isCompanyLoading = false;
+      });
+
+    }
+  }
 
   signIn()async{
+    if (selectedCompany == null) {
+      Get.snackbar("Error", "Please select a company");
+      return;
+    }
     setState(() {
       isloading=true;
     });
@@ -41,29 +77,34 @@ class _LoginState extends State<Login> {
       //Get the user's profile
       final userDoc = await FirebaseFirestore.instance
           .collection('RegisteredCompany')
-          .doc('${widget.companyName}')
+          .doc(selectedCompany)
           .collection('users')
           .doc(email.text)
           .get();
+      //Check if company name in user's profile
+      if (!userDoc.exists) {
+        Get.snackbar("Message", "You are not authorized to access this company");
+        setState(() {
+          isloading = false;
+        });
+        return;
+      }
 
       final username = userDoc.data()?['first_name'];
       print('Welcome, $username');
-      //Check if company name in user's profile
-
-      // if (!userDoc.exists) {
-      //   Get.snackbar("Message", "You are not authorized to access this company");
-      //   return;
-      // }
 
 
-      if (userDoc['companyName']!= widget.companyName) {
+      if (userDoc['companyName']!= selectedCompany) {
         Get.snackbar("Message","You are not authorized to access this company");
+        setState(() {
+          isloading = false;
+        });
         return ;
       }
       // Navigate to homepage
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => Homepage(companyName: widget.companyName)),
+        MaterialPageRoute(builder: (context) => Homepage(companyName: selectedCompany!)),
           (Route<dynamic> route) => false,
       );
     }on FirebaseAuthException catch(e){
@@ -90,7 +131,7 @@ class _LoginState extends State<Login> {
                 KeyboardVisibilityBuilder(
                   builder: (context, isKeyboardVisible){
                     return isKeyboardVisible? SizedBox(height: screenHeight / 30,) :Container(
-                      height: screenHeight / 2.5,
+                      height: screenHeight / 3,
                       width: screenWidth,
                       decoration: BoxDecoration(
                         color: primary,
@@ -106,11 +147,11 @@ class _LoginState extends State<Login> {
                 ),
                 Container(
                   margin: EdgeInsets.only(
-                      top: screenHeight / 30,
-                      bottom: screenHeight / 30
+                      top: screenHeight/50,
+                      bottom: screenHeight / 50
                   ),
                   child: Text(
-                    "Login for ${widget.companyName}",
+                    "Login",
                     style: TextStyle(
                       fontSize: screenHeight / 30,
                     ),
@@ -122,6 +163,9 @@ class _LoginState extends State<Login> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      fieldTitle("Company"),
+                      isCompanyLoading? Center(
+                          child: CircularProgressIndicator()): companyDropdown(),
                       fieldTitle("Employee ID"),
                       customField("Enter your ID", email,false),
                       fieldTitle("Password"),
@@ -129,7 +173,7 @@ class _LoginState extends State<Login> {
 
                       Container(
                         width: screenWidth,
-                        margin: EdgeInsets.only(top: screenHeight/30),
+                        margin: EdgeInsets.only(top: screenHeight/60),
                         height: 60,
                         decoration: BoxDecoration(
                           //color: primary,
@@ -152,15 +196,23 @@ class _LoginState extends State<Login> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 190),
-                  child: TextButton(onPressed: (()=> Get.to(Forgot())), child: Text("Forgot Password?")),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 30, top: 10),
+                      child: TextButton(onPressed: (()=> Get.to(Signup(companyName: selectedCompany?? ''))), child: Text("Register Now")),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 30,top: 10),
+                      child: TextButton(onPressed: (()=> Get.to(Forgot())), child: Text("Forgot Password?")),
+                    ),
+                  ],
                 ),
-                // ElevatedButton(onPressed: (() => Get.to(Signup())),
-                //     child: Text("Register Now")),
-                TextButton(onPressed: (()=> Get.to(Signup(companyName: widget.companyName,))), child: Text("Register Now")),
                 // ElevatedButton(onPressed: (() => Get.to(Forgot())),
                 //     child: Text("Forgot Password ?")),
+
+                TextButton(onPressed: (()=> Get.to(Registercompany())), child: Text("Company Register")),
               ],
           ),
         ),
@@ -169,7 +221,7 @@ class _LoginState extends State<Login> {
 
   Widget fieldTitle(String title) {
     return Container(
-      margin: EdgeInsets.only(bottom: 6),
+      margin: EdgeInsets.only(bottom: 3),
       child: Text(
         title,
         style: TextStyle(
@@ -270,6 +322,42 @@ class _LoginState extends State<Login> {
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget companyDropdown() {
+    return Container(
+      width: screenWidth,
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: DropdownButton<String>(
+        value: selectedCompany,
+        isExpanded: true,
+        hint: Text('Select Company'),
+        underline: SizedBox(),
+        items: companyList
+            .map((company) => DropdownMenuItem<String>(
+          value: company,
+          child: Text(company),
+        ))
+            .toList(),
+        onChanged: (value) {
+          setState(() {
+            selectedCompany = value!;
+          });
+        },
       ),
     );
   }

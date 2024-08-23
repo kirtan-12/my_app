@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:my_app/profilescreen.dart';
-import 'package:my_app/searchpage.dart';
 import 'package:my_app/services/location_service.dart';
 import 'package:my_app/todayscreen.dart';
 
@@ -43,7 +42,7 @@ class _HomepageState extends State<Homepage> {
     await FirebaseAuth.instance.signOut();
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const Searchpage()),
+      MaterialPageRoute(builder: (context) => const Login()),
           (Route<dynamic> route) => false,
     );
   }

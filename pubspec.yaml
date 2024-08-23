@@ -54,6 +54,10 @@ dependencies:
   http: ^1.2.2
   image_picker: ^1.1.2
   fluttertoast: ^8.2.6
+  flutter_background_service: ^5.0.7
+
+
+
 
 dev_dependencies:
   flutter_test:

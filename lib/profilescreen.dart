@@ -9,26 +9,30 @@ import 'package:my_app/model/user.dart';
 
 class Profilescreen extends StatefulWidget {
   final String companyName;
-  const Profilescreen({required this.companyName,super.key});
+  const Profilescreen({required this.companyName, super.key});
 
   @override
   State<Profilescreen> createState() => _ProfilescreenState();
 }
 
 class _ProfilescreenState extends State<Profilescreen> {
-
-  double screenHeight=0;
-  double screenWidth=0;
+  double screenHeight = 0;
+  double screenWidth = 0;
 
   Color primary = const Color(0xFFEF444C);
-  String birth="Date of Birth";
+  String birth = "Date of Birth";
   String _username = '';
   String _imageUrl = '';
+  String _firstName = '';
+  String _lastName = '';
+  String _emailId = '';
+  String _mobileNo = '';
 
-  TextEditingController firstNameController = TextEditingController();
+  /*TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
-  TextEditingController addressController = TextEditingController();
-
+  //TextEditingController addressController = TextEditingController();
+  TextEditingController emailIdController = TextEditingController();
+  TextEditingController mobileNoController = TextEditingController();*/
 
   @override
   void initState() {
@@ -47,11 +51,19 @@ class _ProfilescreenState extends State<Profilescreen> {
     final userDoc = await userDocRef.get();
 
     final username = userDoc.data()?['first_name'];
-    final imageUrl = userDoc.data()?['image_url']; // Get the image URL from Firestore
+    final imageUrl = userDoc.data()?['image_url'];
+    final firstName = userDoc.data()?['first_name'];
+    final lastName = userDoc.data()?['last_name'];
+    final emailId = userDoc.data()?['email'];
+    final mobileNo = userDoc.data()?['mobile_number'];
     //print('Welcome me , $username');
     setState(() {
-      _username = username?? ''; // Update _username here
-      _imageUrl = imageUrl?? ''; // Update _imageUrl
+      _username = username ?? ''; // Update _username here
+      _imageUrl = imageUrl ?? ''; // Update _imageUrl
+      _firstName = firstName ?? '';
+      _lastName = lastName ?? '';
+      _emailId = emailId ?? '';
+      _mobileNo = mobileNo ?? '';
     });
   }
 
@@ -75,12 +87,13 @@ class _ProfilescreenState extends State<Profilescreen> {
               ),
               child: Center(
                 child: _imageUrl.isEmpty
-                    ?Icon(
-                  Icons.person,
-                  color: Colors.black54,
-                  size: 80,
-                )
-                    : Image.network(_imageUrl), // Display the image from Firestore
+                    ? Icon(
+                        Icons.person,
+                        color: Colors.black54,
+                        size: 80,
+                      )
+                    : Image.network(
+                        _imageUrl), // Display the image from Firestore
               ),
             ),
             Align(
@@ -92,195 +105,59 @@ class _ProfilescreenState extends State<Profilescreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24,),
-            Users.canEdit ? textField("First Name", "First name",firstNameController) : field("First Name", Users.firstName),
-            Users.canEdit ? textField("Last Name", "Last name",lastNameController) : field("Last Name", Users.lastName),
-            Users.canEdit ? GestureDetector(
-              onTap: (){
-                showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(1950),
-                  lastDate: DateTime.now(),
-                  builder: (context,child){
-                    return Theme(
-                      data: ThemeData(
-                        colorScheme: ColorScheme.light(
-                            primary: primary,
-                            secondary: primary,
-                            onSecondary: Colors.white
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
-                ).then((value){
-                  setState(() {
-                    birth = DateFormat("MM/dd/yyyy").format(value!);
-                  });
-                });
-              },
-              child: field("Date of Birth", birth),
-            ) : field("Date of Birth", Users.birthDate),
-            Users.canEdit ? textField("Address", "Address",addressController) : field("Address", Users.address),
-            Users.canEdit ? GestureDetector(
-              onTap: () async{
-                String firstName = firstNameController.text;
-                String lastName = lastNameController.text;
-                String birthDate = birth;
-                String address = addressController.text;
-
-                final user = FirebaseAuth.instance.currentUser;
-                final userEmail = user?.email;
-
-                if(Users.canEdit){
-                  if(firstName.isEmpty){
-                    showSnackBar("Please enter your first name");
-                  }else if(lastName.isEmpty){
-                    showSnackBar("Please enter your last name");
-                  }
-                  else if(birthDate.isEmpty){
-                    showSnackBar("Please enter your Date of Birth");
-                  }else if(address.isEmpty){
-                    showSnackBar("Please enter your address");
-                  }else{
-                    await FirebaseFirestore.instance
-                        .collection("RegisteredCompany")
-                        .doc('${widget.companyName}')
-                        .collection("users")
-                        .doc(userEmail)
-                        .update({
-                      'first_name': firstName,
-                      'last_name': lastName,
-                      'birthDate': birthDate,
-                      'address': address,
-                      'canEdit':false,
-                    }).then((value){
-                      setState(() {
-                        Users.canEdit = false;
-                        Users.firstName = firstName;
-                        Users.lastName = lastName;
-                        Users.birthDate = birthDate;
-                        Users.address = address;
-                      });
-                    });
-                  }
-                }else{
-                  showSnackBar("You can't edit anymore, please contact support team.");
-                }
-              },
-              child: Container(
-                height: kToolbarHeight,
-                width: screenWidth,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: primary,
-                ),
-                child: const Center(
-                  child: Text(
-                      "SAVE",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      )
-                  ),
-                ),
-              ),
-            ) : const SizedBox(),
+            const SizedBox(
+              height: 24,
+            ),
+            textField("First Name", _firstName),
+            textField("Last Name", _lastName),
+            textField("Email ID", _emailId),
+            textField("Mobile No.", _mobileNo),
           ],
         ),
       ),
     );
   }
 
-  Widget field(String title, String text){
+  Widget textField(String title, String value) {
     return Column(
       children: [
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
             title,
-            style:const TextStyle(
+
+            style: const TextStyle(
+              fontSize: 18,
               color: Colors.black87,
             ),
           ),
         ),
         Container(
-          height: kToolbarHeight,
-          width: screenWidth,
           margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.only(left: 11),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
+            border: Border.all(color: Colors.black54, width: 1),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          padding: const EdgeInsets.all(18.0),
+          width: screenWidth - 40, // Set the width to match the screen width
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
               color: Colors.black54,
             ),
           ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child:  Text(
-                text,
-                style: const TextStyle(
-                  color: Colors.black54,
-                  fontSize: 16,
-                )
-            ),
-          ),
         ),
       ],
     );
   }
 
-  Widget textField(String title, String hint, TextEditingController controller){
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: TextFormField(
-            controller: controller,
-            cursorColor: Colors.black54,
-            maxLines: 1,
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle:const TextStyle(
-                color: Colors.black54,
-              ),
-              enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black54,
-                  )
-              ),
-              focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black54,
-                  )
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+  void showSnackBar(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      behavior: SnackBarBehavior.floating,
+      content: Text(
+        text,
+      ),
+    ));
   }
-
-  void showSnackBar(String text){
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(
-            text,
-          ),
-        )
-    );
-  }
-
 }

@@ -25,6 +25,9 @@ class Signup extends StatefulWidget {
 
 class _SignupState extends State<Signup> {
 
+  bool isCompanyLoading = true;
+  String? selectedCompany;
+  List<String> companyList = [];
 
   String _gender = '';
   final ImagePicker _picker = ImagePicker();
@@ -40,6 +43,35 @@ class _SignupState extends State<Signup> {
         _image = File(image.path);
         _uploadImageToFirebaseStorage();
       });
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    fetchCompanies();
+  }
+
+  Future<void> fetchCompanies() async{
+    try {
+      final QuerySnapshot result = await FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .get();
+
+      final List<String> fetchedCompanies = result.docs.map((doc) => doc.id).toList();
+
+      setState(() {
+        companyList = fetchedCompanies;
+        isCompanyLoading = false;
+      });
+      print("Fetched Companies: $fetchedCompanies"); // Log the fetched companies
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load companies");
+      setState(() {
+        isCompanyLoading = false;
+      });
+
     }
   }
 
@@ -93,10 +125,11 @@ class _SignupState extends State<Signup> {
       // Upload image to Firebase Storage and get the download URL
       await _uploadImageToFirebaseStorage();
       // Get the selected company name
+      final companyName = selectedCompany;
 
       await _firestore
           .collection('RegisteredCompany')
-          .doc('${widget.companyName}')
+          .doc(companyName)
           .collection('users')
           .doc(email.text)
           .set({
@@ -107,6 +140,7 @@ class _SignupState extends State<Signup> {
         'password': hashedPassword,
         'gender': _gender,
         'image_url':_imageUrl,
+        'companyName': companyName,
       });
       Get.offAll(Wrapper());
     }on FirebaseAuthException catch(e){
@@ -153,6 +187,29 @@ class _SignupState extends State<Signup> {
                     ),
                   ],
                 ),
+              ),
+            ),
+            Container(
+              alignment: Alignment.centerLeft,
+              margin: EdgeInsets.symmetric(
+                  horizontal: screenWidth / 12
+              ),
+              child: Column(
+                crossAxisAlignment:CrossAxisAlignment.start ,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only (bottom: 6),
+                    child: Text(
+                      "Company Name:",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: screenWidth / 20,
+                      ),
+                    ),
+                  ),
+                  isCompanyLoading? Center(
+                      child: CircularProgressIndicator()): companyDropdown(),
+                ],
               ),
             ),
             Container(
@@ -541,6 +598,41 @@ class _SignupState extends State<Signup> {
             //   decoration: InputDecoration(hintText: "Enter Password"),
             // ),
             // ElevatedButton(onPressed: (()=>signup()), child: Text("Sign Up"))
+      ),
+    );
+  }
+  Widget companyDropdown() {
+    return Container(
+      width: screenWidth,
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: DropdownButton<String>(
+        value: selectedCompany,
+        isExpanded: true,
+        hint: Text('Select Company'),
+        underline: SizedBox(),
+        items: companyList
+            .map((company) => DropdownMenuItem<String>(
+          value: company,
+          child: Text(company),
+        ))
+            .toList(),
+        onChanged: (value) {
+          setState(() {
+            selectedCompany = value!;
+          });
+        },
       ),
     );
   }

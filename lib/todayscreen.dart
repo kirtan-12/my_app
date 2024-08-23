@@ -22,6 +22,9 @@ class Todayscreen extends StatefulWidget {
 
 class _TodayscreenState extends State<Todayscreen> {
 
+  final TimeOfDay checkInStartTime = TimeOfDay(hour: 9, minute: 0);
+  final TimeOfDay checkOutEndTime = TimeOfDay(hour: 18, minute: 0);
+
   double screenHeight=0;
   double screenWidth=0;
 
@@ -32,6 +35,7 @@ class _TodayscreenState extends State<Todayscreen> {
   String checkOut = "--/--";
   String location = " ";
   String _currentLocation = " ";
+  Timer? _cleanupTimer;
 
   @override
   void initState() {
@@ -40,24 +44,50 @@ class _TodayscreenState extends State<Todayscreen> {
     _getRecord();
     _getLocation();
     _scheduleMarkAsAbsent();
+    _scheduleDailyCleanup();
+    _startPeriodicLocationUpdates();
   }
+
+
+  // Check if the current time is within the allowed time window
+  bool _isWithinAllowedTime() {
+    final now = TimeOfDay.now();
+
+    // Convert times to minutes since midnight
+    int nowMinutes = now.hour * 60 + now.minute;
+    int checkInStartMinutes = checkInStartTime.hour * 60 + checkInStartTime.minute;
+    int checkOutEndMinutes = checkOutEndTime.hour * 60 + checkOutEndTime.minute;
+
+    // Check if current time is within allowed range
+    return nowMinutes >= checkInStartMinutes && nowMinutes <= checkOutEndMinutes;
+  }
+
 
   void _markAsAbsentIfNoCheckInOut() async {
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
-    final companyDocRef = FirebaseFirestore.instance.collection('RegisteredCompany').doc(widget.companyName);
+    final companyDocRef = FirebaseFirestore.instance.collection(
+        'RegisteredCompany').doc(widget.companyName);
     final userDocRef = companyDocRef.collection('users').doc(userEmail);
-    final recordDocRef = userDocRef.collection('Record').doc(DateFormat('dd MMMM yyyy').format(DateTime.now()));
-
-    final recordDoc = await recordDocRef.get();
-
-    if (!recordDoc.exists || recordDoc['checkIn'] == '--/--' || recordDoc['checkOut'] == '--/--') {
-      await recordDocRef.set({
-        'date': Timestamp.now(),
-        'checkIn': '--/--',
-        'checkOut': '--/--',
-        'status': 'Absent',
-      });
+    final recordDocRef = userDocRef.collection('Record').doc(
+        DateFormat('dd MMMM yyyy').format(DateTime.now()));
+    try {
+      final recordDoc = await recordDocRef.get();
+      if (!recordDoc.exists || recordDoc['checkIn'] == '--/--' ||
+          recordDoc['checkOut'] == '--/--') {
+        await recordDocRef.set({
+          'date': Timestamp.now(),
+          'checkIn': '--/--',
+          'checkOut': '--/--',
+          'status': 'Absent',
+        });
+        print('Marked as absent for ${userEmail}');
+        _getRecord();
+      } else {
+        print('Record exists with check-in or check-out for ${userEmail}');
+      }
+    }catch (e) {
+      print('Failed to mark absent: $e');
     }
   }
 
@@ -66,10 +96,54 @@ class _TodayscreenState extends State<Todayscreen> {
     final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
     final duration = endOfDay.difference(now);
 
+    print('Scheduling mark as absent in ${duration.inMinutes} minutes');
     Timer(duration, _markAsAbsentIfNoCheckInOut);
   }
 
-  void _getLocation() async{
+  void _scheduleDailyCleanup() {
+    final now = DateTime.now();
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final duration = endOfDay.difference(now);
+
+    print('Scheduling daily cleanup in ${duration.inMinutes} minutes');
+    Timer(duration, _cleanupDailyLocationData);
+  }
+
+  Future<void> _cleanupDailyLocationData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final userEmail = user?.email;
+
+    if (userEmail == null) return;
+
+    try {
+      final today = DateFormat('dd MMMM yyyy').format(DateTime.now());
+
+      // Reference to Firestore documents
+      final recordsRef = FirebaseFirestore.instance
+          .collection("RegisteredCompany")
+          .doc(widget.companyName)
+          .collection("users")
+          .doc(userEmail)
+          .collection("Record");
+
+      // Query for today's location updates
+      final locationUpdatesSnapshot = await recordsRef
+          .doc(today)
+          .collection("LocationUpdates")
+          .get();
+
+      final deletePromises = locationUpdatesSnapshot.docs.map((doc) => doc.reference.delete());
+      await Future.wait(deletePromises);
+
+      print('Daily location data cleaned up for ${userEmail}');
+    } catch (e) {
+      print('Failed to clean up daily location data: $e');
+    }
+  }
+
+
+
+  Future<void> _getLocation() async{
 
     bool serviceEnabled;
     LocationPermission permission;
@@ -100,6 +174,13 @@ class _TodayscreenState extends State<Todayscreen> {
 
     List<Placemark> placemark = await placemarkFromCoordinates(Users.lat, Users.long);
 
+    if(mounted){
+      setState(() {
+        location = "${placemark[0].street},${placemark[0].administrativeArea},${placemark[0].postalCode},${placemark[0].country}";
+        _currentLocation = location;
+      });
+    }
+
     setState(() {
       location = "${placemark[0].street},${placemark[0].administrativeArea},${placemark[0].postalCode},${placemark[0].country}";
       _currentLocation = location;
@@ -118,32 +199,6 @@ class _TodayscreenState extends State<Todayscreen> {
     GeoPoint geoPoint = GeoPoint(Users.lat,Users.long);
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
-
-    if (distance < 500) {
-      // Mark as present
-      await FirebaseFirestore.instance
-          .collection("RegisteredCompany")
-          .doc('${widget.companyName}')
-          .collection("users")
-          .doc(FirebaseAuth.instance.currentUser!.email)
-          .collection("Record")
-          .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-          .update({
-        'status': 'Present',
-      });
-    } else {
-      // Mark as absent
-      await FirebaseFirestore.instance
-          .collection("RegisteredCompany")
-          .doc('${widget.companyName}')
-          .collection("users")
-          .doc(FirebaseAuth.instance.currentUser!.email)
-          .collection("Record")
-          .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-          .update({
-        'status': 'Absent',
-      });
-    }
 
     QuerySnapshot snap = await FirebaseFirestore.instance
         .collection("RegisteredCompany")
@@ -185,25 +240,130 @@ class _TodayscreenState extends State<Todayscreen> {
       });
     }
 
+    if (checkOut != "--/--") {
+      if (distance < 500) {
+        // Mark as present
+        await FirebaseFirestore.instance
+            .collection("RegisteredCompany")
+            .doc('${widget.companyName}')
+            .collection("users")
+            .doc(FirebaseAuth.instance.currentUser!.email)
+            .collection("Record")
+            .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+            .update({
+          'status': 'Present',
+        });
+      } else {
+        // Mark as absent
+        await FirebaseFirestore.instance
+            .collection("RegisteredCompany")
+            .doc('${widget.companyName}')
+            .collection("users")
+            .doc(FirebaseAuth.instance.currentUser!.email)
+            .collection("Record")
+            .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+            .update({
+          'status': 'Absent',
+        });
+      }
+    }
+    _storeLocationInFirestore(position.latitude, position.longitude);
+
   }
 
-  Future<void> _getUsername() async {
+  Future<void> _storeLocationInFirestore(double latitude, double longitude) async {
+    GeoPoint geoPoint = GeoPoint(latitude, longitude);
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
-    final companyDocRef = FirebaseFirestore.instance
-        .collection('RegisteredCompany')
-        .doc('${widget.companyName}');
 
-    final userDocRef = companyDocRef.collection('users').doc(userEmail);
-    final userDoc = await userDocRef.get();
+    QuerySnapshot snap = await FirebaseFirestore.instance
+        .collection("RegisteredCompany")
+        .doc('${widget.companyName}')
+        .collection("users")
+        .where('email', isEqualTo: userEmail)
+        .get();
 
-    final username = userDoc.data()?['first_name'];
-    //print('Welcome me , $username');
-    setState(() {
-      _username = username?? ''; // Update _username here
-    });
+    DocumentSnapshot snap2 = await FirebaseFirestore.instance
+        .collection("RegisteredCompany")
+        .doc('${widget.companyName}')
+        .collection("users")
+        .doc(snap.docs[0].get('email'))
+        .collection("Record")
+        .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+        .collection("LocationUpdates")
+        .doc(DateTime.now().toIso8601String())
+        .get();
 
+    if (snap2.exists) {
+      await FirebaseFirestore.instance
+          .collection("RegisteredCompany")
+          .doc(widget.companyName)
+          .collection("users")
+          .doc(snap.docs[0].get('email'))
+          .collection("Record")
+          .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+          .collection("LocationUpdates")
+          .doc(DateTime.now().toIso8601String())
+          .update({
+        'L_location': geoPoint,
+        'timestamp': Timestamp.now(),
+      });
+    } else {
+      await FirebaseFirestore.instance
+          .collection("RegisteredCompany")
+          .doc(widget.companyName)
+          .collection("users")
+          .doc(snap.docs[0].get('email'))
+          .collection("Record")
+          .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+          .collection("LocationUpdates")
+          .doc(DateTime.now().toIso8601String())
+          .set({
+        'L_location': geoPoint,
+        'timestamp': Timestamp.now(),
+      });
+    }
   }
+
+  @override
+  void dispose() {
+    _startPeriodicLocationUpdatesTimer?.cancel();
+    super.dispose();
+  }
+
+  Timer? _startPeriodicLocationUpdatesTimer;
+
+  void _startPeriodicLocationUpdates() {
+    _startPeriodicLocationUpdatesTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+      _getLocation();
+    });
+  }
+
+
+  Future<void> _getUsername() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final userEmail = user?.email;
+      final companyDocRef = FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .doc('${widget.companyName}');
+
+      final userDocRef = companyDocRef.collection('users').doc(userEmail);
+      final userDoc = await userDocRef.get();
+
+      if (userDoc.exists) {
+        final username = userDoc.data()?['first_name'];
+        setState(() {
+          _username = username ?? ''; // Update _username here
+        });
+      } else {
+        Fluttertoast.showToast(msg: "User data not found");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to get username: $e");
+    }
+  }
+
 
   void _getRecord() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -398,11 +558,19 @@ class _TodayscreenState extends State<Todayscreen> {
                       innerColor: primary,
                       key: key,
                       onSubmit: () async {
-
-                        if (!(await Geolocator.isLocationServiceEnabled())) {
-                          Fluttertoast.showToast(msg: "Please enable location services");
+                        if(!_isWithinAllowedTime()){
+                          Fluttertoast.showToast(
+                              msg: "Check-in and Check-out are allowed only between 9:00 AM and 6:00 PM.");
+                          key.currentState?.reset();
                           return;
                         }
+
+                        if (!(await Geolocator.isLocationServiceEnabled())) {
+                          Fluttertoast.showToast(
+                              msg: "Please enable location services");
+                          return;
+                        }
+
 
                         if(Users.lat != 0){
                           _getLocation();
@@ -416,6 +584,9 @@ class _TodayscreenState extends State<Todayscreen> {
                               .collection("users")
                               .where('email', isEqualTo: userEmail)
                               .get();
+
+                          if(snap.docs.isNotEmpty){
+                            String email = snap.docs[0].get('email') ?? '';
 
                           DocumentSnapshot snap2 = await FirebaseFirestore.instance
                               .collection("RegisteredCompany")
@@ -467,6 +638,9 @@ class _TodayscreenState extends State<Todayscreen> {
                           }
                           key.currentState!.reset();
                         }else{
+                            Fluttertoast.showToast(msg: "User not found");
+                          }
+                        }else{
                           Timer(const Duration(seconds: 3),() async {
                             _getLocation();
 
@@ -480,54 +654,68 @@ class _TodayscreenState extends State<Todayscreen> {
                                 .where('email', isEqualTo: userEmail)
                                 .get();
 
-                            DocumentSnapshot snap2 = await FirebaseFirestore.instance
-                                .collection("RegisteredCompany")
-                                .doc('${widget.companyName}')
-                                .collection("users")
-                                .doc(snap.docs[0].get('email'))
-                                .collection("Record")
-                                .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-                                .get();
+                            if(snap.docs.isNotEmpty) {
+                              String email = snap.docs[0].get('email') ?? '';
 
-                            try{
-                              String checkIn = snap2['checkIn'];
-
-                              setState(() {
-                                checkOut = DateFormat('hh:mm').format(DateTime.now());
-                              });
-
-                              await FirebaseFirestore.instance
+                              DocumentSnapshot snap2 = await FirebaseFirestore
+                                  .instance
                                   .collection("RegisteredCompany")
                                   .doc('${widget.companyName}')
                                   .collection("users")
                                   .doc(snap.docs[0].get('email'))
                                   .collection("Record")
-                                  .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-                                  .update({
-                                'date': Timestamp.now(),
-                                'checkIn': checkIn,
-                                'checkIn_location': location,
-                                'checkOut': DateFormat('hh:mm').format(DateTime.now()),
-                              });
-                            }catch(e){
-                              setState(() {
-                                checkIn = DateFormat('hh:mm').format(DateTime.now());
-                              });
-                              await FirebaseFirestore.instance
-                                  .collection("RegisteredCompany")
-                                  .doc('${widget.companyName}')
-                                  .collection("users")
-                                  .doc(snap.docs[0].get('email'))
-                                  .collection("Record")
-                                  .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-                                  .set({
-                                'date': Timestamp.now(),
-                                'checkIn': DateFormat('hh:mm').format(DateTime.now()),
-                                'checkOut': "--/--",
-                                'checkOut_location': location,
-                              });
+                                  .doc(DateFormat('dd MMMM yyyy').format(
+                                  DateTime.now()))
+                                  .get();
+
+                              try {
+                                String checkIn = snap2['checkIn'];
+
+                                setState(() {
+                                  checkOut = DateFormat('hh:mm').format(
+                                      DateTime.now());
+                                });
+
+                                await FirebaseFirestore.instance
+                                    .collection("RegisteredCompany")
+                                    .doc('${widget.companyName}')
+                                    .collection("users")
+                                    .doc(snap.docs[0].get('email'))
+                                    .collection("Record")
+                                    .doc(DateFormat('dd MMMM yyyy').format(
+                                    DateTime.now()))
+                                    .update({
+                                  'date': Timestamp.now(),
+                                  'checkIn': checkIn,
+                                  'checkIn_location': location,
+                                  'checkOut': DateFormat('hh:mm').format(
+                                      DateTime.now()),
+                                });
+                              } catch (e) {
+                                setState(() {
+                                  checkIn = DateFormat('hh:mm').format(
+                                      DateTime.now());
+                                });
+                                await FirebaseFirestore.instance
+                                    .collection("RegisteredCompany")
+                                    .doc('${widget.companyName}')
+                                    .collection("users")
+                                    .doc(snap.docs[0].get('email'))
+                                    .collection("Record")
+                                    .doc(DateFormat('dd MMMM yyyy').format(
+                                    DateTime.now()))
+                                    .set({
+                                  'date': Timestamp.now(),
+                                  'checkIn': DateFormat('hh:mm').format(
+                                      DateTime.now()),
+                                  'checkOut': "--/--",
+                                  'checkOut_location': location,
+                                });
+                              }
+                              key.currentState!.reset();
+                            }else{
+                              Fluttertoast.showToast(msg: "User not found");
                             }
-                            key.currentState!.reset();
                           });
                         }
                       },
@@ -537,7 +725,9 @@ class _TodayscreenState extends State<Todayscreen> {
             ) : Container(
               margin: const EdgeInsets.only(top: 32, bottom: 32),
               child: Text(
-                "You have Completed this day!",
+                _isWithinAllowedTime()
+                  ?"You have Completed this day!"
+                  : "Check-in and Check-out are allowed only between 9:00 AM and 6:00 PM.",
                 style: TextStyle(
                   fontSize: screenWidth / 20,
                   color: Colors.black54,
