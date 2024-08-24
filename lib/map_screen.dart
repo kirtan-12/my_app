@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
-
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -22,32 +20,60 @@ class _MapScreenState extends State<MapScreen> {
     zoom: 12,
   );
 
-
   final Set<Marker> _markers = <Marker>{};
   String _address = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
   void _loadData() async {
     try {
       final position = await _getUserCurrentLocation();
-      _addMarker(position);
-      _animateCamera(position);
+      final address = await _getAddressFromLatLng(position.latitude, position.longitude);
+      setState(() {
+        _address = address;
+        _addMarker(position, address);
+        _animateCamera(position);
+      });
     } catch (e) {
       print('Error loading data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading location data')),
+      );
     }
   }
 
   Future<Position> _getUserCurrentLocation() async {
-    await Geolocator.requestPermission();
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
     return await Geolocator.getCurrentPosition();
   }
 
-  void _addMarker(Position position) {
+  void _addMarker(Position position, String address) {
     final marker = Marker(
       markerId: MarkerId('1'),
       position: LatLng(position.latitude, position.longitude),
-      infoWindow: InfoWindow(title: _address),
+      infoWindow: InfoWindow(title: address),
     );
     setState(() {
+      _markers.clear();
       _markers.add(marker);
     });
   }
@@ -64,11 +90,11 @@ class _MapScreenState extends State<MapScreen> {
   Future<String> _getAddressFromLatLng(double lat, double lng) async {
     try {
       final placemarks = await placemarkFromCoordinates(lat, lng);
-      final placemark = placemarks[0];
+      final placemark = placemarks.first;
       return '${placemark.name}, ${placemark.locality}';
     } catch (e) {
       print('Error getting address: $e');
-      return '';
+      return 'Unknown address';
     }
   }
 
@@ -77,82 +103,63 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _loadData();
-  }
-
-  @override
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: SafeArea(
         child: Stack(
           children: <Widget>[
             GoogleMap(
-                mapType: MapType.normal,
-                initialCameraPosition: _googlemap,
-                markers: Set<Marker>.of(_markers),
-                compassEnabled: true,
-                onMapCreated: (GoogleMapController controller) {
-                  _gcontroller.complete(controller);
-                },
-                onTap: (LatLng latLng) {
-                  print('Tapped at ${latLng.latitude}, ${latLng.longitude}');
-                  _getAddressFromLatLng(latLng.latitude, latLng.longitude).then((address){
-                    setState(() {
-                      _address = address;
-                      _markers.clear();
-                      _markers.add(
-                        Marker(
-                          markerId: MarkerId(_markers.length.toString()),
-                          position: latLng,
-                          infoWindow: InfoWindow(
-                            title: address,
-                          ),
-                        ),
-                      );
-                    });
-                  });
-                },
+              mapType: MapType.normal,
+              initialCameraPosition: _googlemap,
+              markers: _markers,
+              compassEnabled: true,
+              onMapCreated: (GoogleMapController controller) {
+                _gcontroller.complete(controller);
+              },
+              onTap: (LatLng latLng) async {
+                final address = await _getAddressFromLatLng(latLng.latitude, latLng.longitude);
+                setState(() {
+                  _address = address;
+                  _markers.clear();
+                  _markers.add(
+                    Marker(
+                      markerId: MarkerId(_markers.length.toString()),
+                      position: latLng,
+                      infoWindow: InfoWindow(
+                        title: address,
+                      ),
+                    ),
+                  );
+                });
+              },
             ),
             Positioned(
               bottom: 100.0,
               right: 20.0,
               child: FloatingActionButton(
                 onPressed: () async {
-                  _getUserCurrentLocation().then((value) async {
-                    _getAddressFromLatLng(value.latitude, value.longitude).then((address){
-                      setState(() {
-                        _address = address; // Update _address here
-                        _markers.clear();
-                        _markers.add(
-                          Marker(
-                            markerId: MarkerId('1'),
-                            position: LatLng(value.latitude, value.longitude),
-                            infoWindow: InfoWindow(
-                              title: _address,
-                            ),
-                          ),
-                        );
-                      });
+                  try {
+                    final position = await _getUserCurrentLocation();
+                    final address = await _getAddressFromLatLng(position.latitude, position.longitude);
+                    setState(() {
+                      _address = address;
+                      _addMarker(position, address);
                     });
-                    CameraPosition cameraPosition = CameraPosition(
-                      target: LatLng(value.latitude, value.longitude),
-                      zoom: 18,
+                    final controller = await _gcontroller.future;
+                    controller.animateCamera(CameraUpdate.newCameraPosition(
+                      CameraPosition(
+                        target: LatLng(position.latitude, position.longitude),
+                        zoom: 18,
+                      ),
+                    ));
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error retrieving location')),
                     );
-
-                    final GoogleMapController controller = await _gcontroller
-                        .future;
-
-                    controller.animateCamera(
-                        CameraUpdate.newCameraPosition(cameraPosition));
-                    // setState(() {
-                    //   _getAddressFromLatLng(value.latitude, value.longitude);
-                    // });
-                  });
+                  }
                 },
                 child: Icon(Icons.my_location),
               ),
@@ -163,7 +170,7 @@ class _MapScreenState extends State<MapScreen> {
               right: 20.0,
               child: ElevatedButton(
                 onPressed: () {
-                  if (_address.isNotEmpty) {
+                  if (_markers.isNotEmpty) {
                     Navigator.pop(context, _markers.first.position);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(

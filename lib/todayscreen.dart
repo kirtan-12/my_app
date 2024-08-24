@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:my_app/model/user.dart';
 import 'package:slide_to_act/slide_to_act.dart';
@@ -23,7 +22,7 @@ class Todayscreen extends StatefulWidget {
 class _TodayscreenState extends State<Todayscreen> {
 
   final TimeOfDay checkInStartTime = TimeOfDay(hour: 9, minute: 0);
-  final TimeOfDay checkOutEndTime = TimeOfDay(hour: 18, minute: 0);
+  final TimeOfDay checkOutEndTime = TimeOfDay(hour: 23, minute: 0);
 
   double screenHeight=0;
   double screenWidth=0;
@@ -48,6 +47,10 @@ class _TodayscreenState extends State<Todayscreen> {
     _startPeriodicLocationUpdates();
   }
 
+  bool _isWeekend() {
+    final today = DateTime.now();
+    return today.weekday == DateTime.saturday || today.weekday == DateTime.sunday;
+  }
 
   // Check if the current time is within the allowed time window
   bool _isWithinAllowedTime() {
@@ -63,31 +66,74 @@ class _TodayscreenState extends State<Todayscreen> {
   }
 
 
-  void _markAsAbsentIfNoCheckInOut() async {
+  void _markAsAbsentIfNoRecord() async {
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
-    final companyDocRef = FirebaseFirestore.instance.collection(
-        'RegisteredCompany').doc(widget.companyName);
+    final companyDocRef = FirebaseFirestore.instance.collection('RegisteredCompany').doc(widget.companyName);
     final userDocRef = companyDocRef.collection('users').doc(userEmail);
-    final recordDocRef = userDocRef.collection('Record').doc(
-        DateFormat('dd MMMM yyyy').format(DateTime.now()));
-    try {
-      final recordDoc = await recordDocRef.get();
-      if (!recordDoc.exists || recordDoc['checkIn'] == '--/--' ||
-          recordDoc['checkOut'] == '--/--') {
-        await recordDocRef.set({
-          'date': Timestamp.now(),
-          'checkIn': '--/--',
-          'checkOut': '--/--',
-          'status': 'Absent',
-        });
-        print('Marked as absent for ${userEmail}');
-        _getRecord();
-      } else {
-        print('Record exists with check-in or check-out for ${userEmail}');
+
+    // Get the list of all past days in the current month, up until today
+    final now = DateTime.now();
+    final daysInMonth = <DateTime>[];
+    for (int i = 0; i < now.day; i++) {
+      daysInMonth.add(DateTime(now.year, now.month, i + 1));
+    }
+
+    // Get the list of all days that the user has checked in or out
+    final recordDocs = await userDocRef.collection('Record').get();
+    final daysWithRecord = <DateTime>[];
+    for (var doc in recordDocs.docs) {
+      // Check if the 'date' field exists and is not null
+      final timestamp = doc.data()['date'] as Timestamp?;
+      if (timestamp != null) {
+        final date = timestamp.toDate();
+        daysWithRecord.add(date);
       }
-    }catch (e) {
-      print('Failed to mark absent: $e');
+    }
+
+    // Fetch holidays from Firestore
+    final holidaysSnapshot = await FirebaseFirestore.instance
+        .collection('RegisteredCompany')
+        .doc(widget.companyName)
+        .collection('Holidays') // Assuming holidays are stored here
+        .get();
+
+    final holidays = holidaysSnapshot.docs
+        .map((doc) => (doc.data()['date'] as Timestamp?)?.toDate())
+        .where((date) => date != null) // Filter out null dates
+        .toList();
+
+    print("Holidays are $holidays");
+
+    // Find the days that are not in the Firestore data and are not holidays
+    final absentDays = daysInMonth.where((day) {
+      if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
+        return false;
+      }
+      // If no record exists for the day and it's not a holiday, mark it as absent
+      return !daysWithRecord.contains(day) && !holidays.contains(day);
+    }).toList();
+
+    // Mark the user as absent for these days only if no record exists
+    for (var day in absentDays) {
+      final recordDocRef = userDocRef.collection('Record').doc(DateFormat('dd MMMM yyyy').format(day));
+
+      // Check if a record already exists for the day
+      final existingRecord = await recordDocRef.get();
+      if (!existingRecord.exists) {
+        // If no record exists and it's not a holiday, mark it as absent
+        if (!holidays.contains(day)) {
+          await recordDocRef.set({
+            'date': Timestamp.fromDate(day),
+            'checkIn': '--/--',
+            'checkOut': '--/--',
+            'status': 'Absent',
+          });
+          print('Marked as absent for ${userEmail} on ${DateFormat('dd MMMM yyyy').format(day)}');
+        }
+      } else {
+        print('Record already exists for ${DateFormat('dd MMMM yyyy').format(day)}. Skipping...');
+      }
     }
   }
 
@@ -97,7 +143,7 @@ class _TodayscreenState extends State<Todayscreen> {
     final duration = endOfDay.difference(now);
 
     print('Scheduling mark as absent in ${duration.inMinutes} minutes');
-    Timer(duration, _markAsAbsentIfNoCheckInOut);
+    Timer(duration, _markAsAbsentIfNoRecord);
   }
 
   void _scheduleDailyCleanup() {
@@ -185,6 +231,12 @@ class _TodayscreenState extends State<Todayscreen> {
       location = "${placemark[0].street},${placemark[0].administrativeArea},${placemark[0].postalCode},${placemark[0].country}";
       _currentLocation = location;
     });
+
+    // final today = DateTime.now();
+    // if (today.weekday == DateTime.saturday || today.weekday == DateTime.sunday) {
+    //   // Do not process location or attendance for weekends
+    //   return;
+    // }
 
     final companyDoc = await FirebaseFirestore.instance.collection('RegisteredCompany').doc(widget.companyName).get();
     final companyLocation = companyDoc.data()!['Location'];
@@ -558,6 +610,15 @@ class _TodayscreenState extends State<Todayscreen> {
                       innerColor: primary,
                       key: key,
                       onSubmit: () async {
+                        // Check if it's a weekend
+                        // if (_isWeekend()) {
+                        //   Fluttertoast.showToast(
+                        //     msg: "Check-in and Check-out are not allowed on weekends.",
+                        //   );
+                        //   key.currentState?.reset();
+                        //   return;
+                        // }
+
                         if(!_isWithinAllowedTime()){
                           Fluttertoast.showToast(
                               msg: "Check-in and Check-out are allowed only between 9:00 AM and 6:00 PM.");

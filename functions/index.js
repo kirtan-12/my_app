@@ -1,34 +1,19 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-admin.initializeApp();
+/**
+ * Import function triggers from their respective submodules:
+ *
+ * const {onCall} = require("firebase-functions/v2/https");
+ * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
+ *
+ * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ */
 
+const {onRequest} = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
 
-exports.markAbsentUsers = functions.https.onSchedule("0 0 * * *", async () => {
-  const companiesRef = admin.firestore().collection("RegisteredCompany");
-  const companies = await companiesRef.get();
+// Create and deploy your first functions
+// https://firebase.google.com/docs/functions/get-started
 
-  companies.forEach((company) => {
-    const usersRef = company.ref.collection("users");
-    usersRef.get().then((users) => {
-      users.forEach((user) => {
-        const timestamp = admin.firestore.Timestamp.now();
-        const dateString = timestamp.toDate().toLocaleDateString();
-        const recordRef = user.ref.collection("Record").doc(dateString);
-        recordRef.get().then((record) => {
-          if (
-            !record.exists ||
-            record.get("checkIn") === "--/--" ||
-            record.get("checkOut") === "--/--"
-          ) {
-            recordRef.set({
-              date: admin.firestore.Timestamp.now(),
-              checkIn: "--/--",
-              checkOut: "--/--",
-              status: "Absent",
-            });
-          }
-        });
-      });
-    });
-  });
-});
+// exports.helloWorld = onRequest((request, response) => {
+//   logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });

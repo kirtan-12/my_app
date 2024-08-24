@@ -127,10 +127,10 @@ class _CalendarscreenState extends State<Calendarscreen> {
                   return ListView.builder(
                     itemCount: snap.length,
                     itemBuilder: (context, index) {
-                      if (snap[index]['status']!=null && DateFormat('MMMM')
-                                  .format(snap[index]['date'].toDate()) ==
-                              _month &&
-                          snap[index]['checkOut'] != "--/--") {
+                      // Convert Firestore Timestamp to DateTime
+                      DateTime recordDate = snap[index]['date'].toDate();
+
+                      if (DateFormat('MMMM').format(recordDate) == _month) {
                         return Container(
                           margin: EdgeInsets.only(
                               top: index > 0 ? 12 : 0,
@@ -164,7 +164,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
                                   child: Center(
                                     child: Text(
                                       DateFormat('EE \n dd')
-                                          .format(snap[index]['date'].toDate()),
+                                          .format(recordDate),
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: screenWidth / 20,
@@ -187,7 +187,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
                                       ),
                                     ),
                                     Text(
-                                      snap[index]['checkIn'],
+                                      snap[index]['checkIn']?? "--/--",
                                       style: TextStyle(
                                         fontSize: screenWidth / 20,
                                         color: Colors.black,
@@ -209,7 +209,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
                                       ),
                                     ),
                                     Text(
-                                      snap[index]['checkOut'],
+                                      snap[index]['checkOut'] ?? "--/--",
                                       style: TextStyle(
                                         fontSize: screenWidth / 20,
                                         color: Colors.black,
