@@ -405,6 +405,7 @@ class _TodayscreenState extends State<Todayscreen> {
 
       if (userDoc.exists) {
         final username = userDoc.data()?['first_name'];
+        print("Welcome $username");
         setState(() {
           _username = username ?? ''; // Update _username here
         });

@@ -10,7 +10,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:my_app/login.dart';
 import 'package:my_app/wrapper.dart';
@@ -41,8 +43,20 @@ class _SignupState extends State<Signup> {
     if (image!= null) {
       setState(() {
         _image = File(image.path);
-        _uploadImageToFirebaseStorage();
       });
+      // Process the image using Google ML Kit
+      final inputImage = InputImage.fromFilePath(image.path);
+      final faceDetector = GoogleMlKit.vision.faceDetector();
+      final faces = await faceDetector.processImage(inputImage);
+
+      if (faces.isNotEmpty) {
+        // Here you can get face bounding box or other details
+        final face = faces.first;
+        // You can upload the image to Firebase Storage or process the face data further
+        _uploadImageToFirebaseStorage();
+      } else {
+        Fluttertoast.showToast(msg: "No face detected. Please try again.");
+      }
     }
   }
 
@@ -77,10 +91,16 @@ class _SignupState extends State<Signup> {
 
   Future<void> _uploadImageToFirebaseStorage() async {
     if (_image == null) return;
-
-    final Reference ref = _storage.ref().child('images/${DateTime.now().toString()}.jpg');
-    await ref.putFile(_image!);
-    _imageUrl = await ref.getDownloadURL();
+    try {
+      final Reference ref = _storage.ref().child(
+          'images/${DateTime.now().toString()}.jpg');
+      final UploadTask uploadTask = ref.putFile(_image!);
+      final TaskSnapshot snapshot = await uploadTask;
+      // Get the image URL after upload
+      _imageUrl = await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      _showError("Failed to upload image: $e");
+    }
   }
 
   TextEditingController email = TextEditingController();
@@ -111,7 +131,8 @@ class _SignupState extends State<Signup> {
         lastNameController.text.isEmpty ||
         email.text.isEmpty ||
         mobileNumberController.text.isEmpty ||
-        password.text.isEmpty) {
+        password.text.isEmpty ||
+        _image == null ) {
       _showError('Please fill in all fields');
       return;
     }
