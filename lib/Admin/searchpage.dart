@@ -5,23 +5,36 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 class Searchpage extends StatefulWidget {
   final String companyName;
-  const Searchpage({super.key, required this.companyName});
+  const Searchpage({required this.companyName,super.key});
 
   @override
   State<Searchpage> createState() => _MyState();
 }
 
 class _MyState extends State<Searchpage> {
+
   double screenHeight = 0;
   double screenWidth = 0;
 
-  String _username ='';
+  String _username = '';
+  List<Map<String,dynamic>> employees = [];
+  List<Map<String, dynamic>> filteredEmployees = [];
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _getUsername();
+    _fetchEmployees();
+    searchController.addListener(_filterEmployees);
+  }
+
+  @override
+  void dispose() {
+    searchController.removeListener(_filterEmployees);
+    searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _getUsername() async {
@@ -49,6 +62,42 @@ class _MyState extends State<Searchpage> {
     }
   }
 
+  Future<void> _fetchEmployees() async {
+    try {
+      final companyDocRef = FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .doc(widget.companyName);
+
+      final employeesSnapshot = await companyDocRef.collection('users')
+          .where('user_role',isNotEqualTo: 'Admin')
+          .get();
+
+      setState(() {
+        employees = employeesSnapshot.docs
+            .map((doc) => doc.data() as Map<String, dynamic>)
+            .toList();
+        filteredEmployees = employees;
+        print("Employee fetched: ${employees.length}");
+      });
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to fetch employees: $e");
+    }
+  }
+
+  void _filterEmployees() {
+    String query = searchController.text.toLowerCase();
+    print("Search query: $query");
+    setState(() {
+      filteredEmployees = employees.where((employee) {
+        String employeeName = (employee['first_name'] ?? '').toLowerCase();
+        bool matches = employeeName.contains(query);
+        print("Checking ${employee['first_name']} - matches: $matches");
+        return matches;
+      }).toList();
+      print("Filtered employees: ${filteredEmployees.length}");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     screenHeight = MediaQuery.of(context).size.height;
@@ -72,7 +121,7 @@ class _MyState extends State<Searchpage> {
             Container(
               alignment: Alignment.centerLeft,
               child: Text(
-                "Admin $_username,",
+                "Admin, $_username",
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: screenWidth / 15,
@@ -104,6 +153,7 @@ class _MyState extends State<Searchpage> {
                             child: Padding(
                               padding: const EdgeInsets.only(left: 15),
                               child: TextFormField(
+                                controller: searchController,
                                 enableSuggestions: false,
                                 decoration: InputDecoration(
                                   hintText: 'Enter Employee ID',
@@ -122,91 +172,59 @@ class _MyState extends State<Searchpage> {
                 ),
               ),
             ),
-            Container(
-              padding: EdgeInsets.only(top: 475),
-              alignment: Alignment.centerRight,
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Notify()),
-                  );
-                },
-                backgroundColor: Color(0xFFE57373),
-                child: Icon(
-                  Icons.notifications_active,
-                  size: 30.0,
-                  color: Colors.black,
+            filteredEmployees.isEmpty
+                ? Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Center(
+                child: Text(
+                  "No Results Found",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.redAccent,
+                  ),
                 ),
               ),
+            )
+            : GridView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: filteredEmployees.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Number of columns
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 3 / 2, // Aspect ratio for the grid items
+              ),
+              itemBuilder: (context, index) {
+                final employee = filteredEmployees[index];
+                return Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(25.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            (employee['first_name'] ?? '').toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Center(child: Text(employee['user_role'] ?? '')),
+                        // Add other details you want to display
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class Notify extends StatefulWidget {
-  const Notify({super.key});
-
-  @override
-  State<Notify> createState() => _NotifyState();
-}
-
-class _NotifyState extends State<Notify> {
-  double screenHeight = 0;
-  double screenWidth = 0;
-
-  Color primary = const Color(0xFFE57373);
-
-  List<bool> _isExpanded = List.generate(20, (index) => false);
-
-  @override
-  Widget build(BuildContext context) {
-    screenWidth = MediaQuery.of(context).size.width;
-    screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        backgroundColor: primary,
-      ),
-      body: ListView.builder(
-        itemCount: 20, // number of items in the list
-        itemBuilder: (context, count) {
-          return Card(
-            child: Column(
-              children: [
-                ListTile(
-                  title: Text('Notification ${count + 1}'),
-                  subtitle: Text('This is a notification'),
-                  onTap: () {
-                    setState(() {
-                      for (int i = 0; i < 20; i++) {
-                        if (i == count) {
-                          _isExpanded[i] = !_isExpanded[i];
-                        } else {
-                          _isExpanded[i] = false;
-                        }
-                      }
-                    });
-                  },
-                ),
-                _isExpanded[count]
-                    ? Container(
-                  padding: EdgeInsets.all(16),
-                  child: Text('This is the message for Notification ${count + 1}'),
-                )
-                    : SizedBox(),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:my_app/Admin/notification.dart';
 import 'package:my_app/Admin/profilescreen.dart';
 import 'package:my_app/Admin/searchpage.dart';
 
@@ -96,6 +97,7 @@ class _AdminhomepageState extends State<Adminhomepage> {
                         ),
                       ),
                     ),
+
                   ),
                 ),
               }
@@ -103,6 +105,23 @@ class _AdminhomepageState extends State<Adminhomepage> {
           ),
         ),
       ),
+      floatingActionButton: currentIndex == 0
+      ? FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Notify()),
+          );
+        },
+        backgroundColor: Color(0xFFE57373),
+        child: Icon(
+          Icons.notifications_active,
+          size: 30.0,
+          color: Colors.black,
+        ),
+      )
+          : null,
     );
   }
 }
+
