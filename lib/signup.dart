@@ -154,6 +154,7 @@ class _SignupState extends State<Signup> {
           .collection('users')
           .doc(email.text)
           .set({
+        'user_role':"Employee",
         'first_name': firstNameController.text,
         'last_name': lastNameController.text,
         'email': email.text,

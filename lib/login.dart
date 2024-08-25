@@ -8,6 +8,8 @@ import 'package:my_app/homepage.dart';
 import 'package:my_app/registercompany.dart';
 import 'package:my_app/signup.dart';
 
+import 'Admin/adminhomepage.dart';
+
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -90,6 +92,14 @@ class _LoginState extends State<Login> {
         return;
       }
 
+      final role = userDoc.data()?['user_role'];
+      if(role == null){
+        Get.snackbar("Message", "User role not found");
+        setState(() {
+          isloading = false;
+        });
+      }
+
       final username = userDoc.data()?['first_name'];
       print('Welcome, $username');
 
@@ -101,12 +111,23 @@ class _LoginState extends State<Login> {
         });
         return ;
       }
-      // Navigate to homepage
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => Homepage(companyName: selectedCompany!)),
-          (Route<dynamic> route) => false,
-      );
+      //Redirect according to role
+      if(role == 'Admin'){
+        Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context)=> Adminhomepage(companyName: selectedCompany!)),
+            (Route<dynamic> route) => false,
+        );
+      }else if(role == 'Employee'){
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => Homepage(companyName: selectedCompany!)),
+              (Route<dynamic> route) => false,
+        );
+      }else{
+        Get.snackbar("Message", "Invalid Role");
+      }
+
     }on FirebaseAuthException catch(e){
       Get.snackbar("Message", e.code);
     }catch(e){
