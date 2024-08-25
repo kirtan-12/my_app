@@ -125,7 +125,6 @@ class _ProfilescreenState extends State<Profilescreen> {
           alignment: Alignment.centerLeft,
           child: Text(
             title,
-
             style: const TextStyle(
               fontSize: 18,
               color: Colors.black87,

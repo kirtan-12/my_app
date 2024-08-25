@@ -1,7 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class Searchpage extends StatefulWidget {
-  const Searchpage({super.key});
+  final String companyName;
+  const Searchpage({super.key, required this.companyName});
 
   @override
   State<Searchpage> createState() => _MyState();
@@ -10,6 +14,40 @@ class Searchpage extends StatefulWidget {
 class _MyState extends State<Searchpage> {
   double screenHeight = 0;
   double screenWidth = 0;
+
+  String _username ='';
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _getUsername();
+  }
+
+  Future<void> _getUsername() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final userEmail = user?.email;
+      final companyDocRef = FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .doc('${widget.companyName}');
+
+      final userDocRef = companyDocRef.collection('users').doc(userEmail);
+      final userDoc = await userDocRef.get();
+
+      if (userDoc.exists) {
+        final username = userDoc.data()?['first_name'];
+        print("Welcome $username");
+        setState(() {
+          _username = username ?? ''; // Update _username here
+        });
+      } else {
+        Fluttertoast.showToast(msg: "User data not found");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to get username: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +72,7 @@ class _MyState extends State<Searchpage> {
             Container(
               alignment: Alignment.centerLeft,
               child: Text(
-                "Admin",
+                "Admin $_username,",
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: screenWidth / 15,

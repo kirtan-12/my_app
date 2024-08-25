@@ -34,8 +34,8 @@ class _AdminhomepageState extends State<Adminhomepage> {
       body: IndexedStack(
         index: currentIndex,
         children:[
-          Searchpage(),
-          Profilescreen(),
+          Searchpage(companyName: widget.companyName,),
+          Profilescreen(companyName: widget.companyName,),
         ],
       ),
       bottomNavigationBar: Container(

@@ -1,40 +1,32 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-
 class Profilescreen extends StatefulWidget {
-  //final String companyName;
-  const Profilescreen({super.key});
+  final String companyName;
+  const Profilescreen({super.key, required this.companyName});
 
   @override
   State<Profilescreen> createState() => _ProfilescreenState();
 }
 
 class _ProfilescreenState extends State<Profilescreen> {
-
-  double screenHeight=0;
-  double screenWidth=0;
+  double screenHeight = 0;
+  double screenWidth = 0;
 
   Color primary = const Color(0xFFEF444C);
-  /*String birth="Date of Birth";
+  String birth="Date of Birth";
   String _username = '';
   String _imageUrl = '';
   String _firstName = '';
   String _lastName = '';
   String _emailId = '';
-  String _mobileNo = '';*/
-
-  TextEditingController firstNameController = TextEditingController();
-  TextEditingController lastNameController = TextEditingController();
-  //TextEditingController addressController = TextEditingController();
-  TextEditingController emailIdController = TextEditingController();
-  TextEditingController mobileNoController = TextEditingController();
-
-
+  String _mobileNo = '';
 
   @override
-  /*void initState() {
+  void initState() {
     super.initState();
     _getUsername();
   }
@@ -65,7 +57,7 @@ class _ProfilescreenState extends State<Profilescreen> {
       _mobileNo = mobileNo ?? '';
 
     });
-  }*/
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,74 +78,75 @@ class _ProfilescreenState extends State<Profilescreen> {
                 //color: primary,
               ),
               child: Center(
-                child: Icon(
-                  Icons.person,
-                  color: Colors.black54,
-                  size: 80,
-                ),
+                  child: _imageUrl.isEmpty
+                      ? Icon(
+                    Icons.person,
+                    color: Colors.black54,
+                    size: 80,
+                  ): Image.network(_imageUrl)
               ),
             ),
             Align(
               alignment: Alignment.center,
               child: Text(
-                "Employee",
+                "Admin  $_username",
                 style: TextStyle(
                   fontSize: 20,
                 ),
               ),
             ),
-            const SizedBox(height: 24,),
-            textField("First Name","First Name",firstNameController),
-            textField("Last Name","Last Name",lastNameController),
-            textField("Email ID","Email ID",emailIdController),
-            textField("Mobile No.","Mobile No,",mobileNoController),
+            const SizedBox(
+              height: 24,
+            ),
+            textField("First Name", _firstName),
+            textField("Last Name", _lastName),
+            textField("Email ID", _emailId),
+            textField("Mobile No.", _mobileNo),
           ],
         ),
       ),
     );
   }
 
-
-  Widget textField(String title, String hint,TextEditingController controller){
-  return Column(
-  children: [
-  Align(
-  alignment: Alignment.centerLeft,
-  child: Text(
-  title,
-  style: const TextStyle(
-  color: Colors.black87,
-  ),
-  ),
-  ),
-  Container(
-  margin: const EdgeInsets.only(bottom: 12),
-  decoration: BoxDecoration(
-  border: Border.all(color: Colors.black54, width: 1),
-  borderRadius: BorderRadius.circular(5),
-  ),
-  padding: const EdgeInsets.all(8.0),
-  width: screenWidth - 40, // Set the width to match the screen width
-  child: Text(
-  hint,
-  style: const TextStyle(
-  color: Colors.black54,
-  ),
-  ),
-  ),
-  ],
-  );
+  Widget textField(String title, String value) {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black54, width: 1),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          padding: const EdgeInsets.all(8.0),
+          width: screenWidth - 40, // Set the width to match the screen width
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  void showSnackBar(String text){
-  ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-  behavior: SnackBarBehavior.floating,
-  content: Text(
-  text,
-  ),
-  )
-  );
+  void showSnackBar(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      behavior: SnackBarBehavior.floating,
+      content: Text(
+        text,
+      ),
+    ));
   }
-
 }
