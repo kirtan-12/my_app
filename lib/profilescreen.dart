@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:my_app/login.dart';
 import 'package:my_app/model/user.dart';
 
 class Profilescreen extends StatefulWidget {
@@ -112,6 +113,27 @@ class _ProfilescreenState extends State<Profilescreen> {
             textField("Last Name", _lastName),
             textField("Email ID", _emailId),
             textField("Mobile No.", _mobileNo),
+            Container(
+              width: screenWidth,
+              height: 60,
+              margin: EdgeInsets.only(top: screenHeight/60),
+              decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(Radius.circular(25))
+              ),
+              child: ElevatedButton(
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Login()), // Replace with your login screen widget
+                  );
+                },
+                child: Text('Logout',style: TextStyle(color: Colors.white),),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, // Change the button color to red
+                ),
+              ),
+            )
           ],
         ),
       ),
@@ -137,7 +159,7 @@ class _ProfilescreenState extends State<Profilescreen> {
             border: Border.all(color: Colors.black54, width: 1),
             borderRadius: BorderRadius.circular(5),
           ),
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.all(15.0),
           width: screenWidth - 40, // Set the width to match the screen width
           child: Text(
             value,

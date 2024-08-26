@@ -38,15 +38,6 @@ class _HomepageState extends State<Homepage> {
 
   final user = FirebaseAuth.instance.currentUser;
 
-  signout()async{
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const Login()),
-          (Route<dynamic> route) => false,
-    );
-  }
-
   @override
   void initState() {
     super.initState();
@@ -184,13 +175,6 @@ class _HomepageState extends State<Homepage> {
           ),
         ),
       ),
-
-      floatingActionButton: currentIndex == 1
-        ?FloatingActionButton(
-        onPressed: (()=>signout()),
-        child: Icon(Icons.login),
-      )
-          : null,
     );
   }
 }

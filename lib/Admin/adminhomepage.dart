@@ -115,7 +115,7 @@ class _AdminhomepageState extends State<Adminhomepage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Notify()),
+            MaterialPageRoute(builder: (context) => Notify(companyName: widget.companyName,)),
           );
         },
         backgroundColor: Color(0xFFE57373),
