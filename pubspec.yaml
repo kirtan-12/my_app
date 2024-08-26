@@ -56,6 +56,7 @@ dependencies:
   fluttertoast: ^8.2.6
   flutter_background_service: ^5.0.7
   google_ml_kit: ^0.18.0
+  table_calendar: ^3.1.2
 
 
 

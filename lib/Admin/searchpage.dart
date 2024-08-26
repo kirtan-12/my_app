@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:my_app/Admin/employeedetailpage.dart';
 import 'package:my_app/login.dart';
 
 class Searchpage extends StatefulWidget {
@@ -23,7 +24,6 @@ class _MyState extends State<Searchpage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _getUsername();
     _fetchEmployees();
@@ -99,12 +99,41 @@ class _MyState extends State<Searchpage> {
     });
   }
 
+  void _onEmployeeTap(Map<String, dynamic> employee) async {
+    try {
+      final employeeEmail = employee['email']; // Assuming 'email' field exists
+      final companyDocRef = FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .doc(widget.companyName);
+
+      final employeeDocRef = companyDocRef.collection('users').doc(employeeEmail);
+      final employeeDoc = await employeeDocRef.get();
+
+      if (employeeDoc.exists) {
+        final employeeData = employeeDoc.data();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EmployeeDetailsPage(
+              companyName: widget.companyName,
+              employee: employeeData!,
+            ),
+          ),
+        );
+      } else {
+        Fluttertoast.showToast(msg: "Employee data not found");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to fetch employee details: $e");
+    }
+  }
+
   signout() async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const Login()),
-      (Route<dynamic> route) => false,
+          (Route<dynamic> route) => false,
     );
   }
 
@@ -186,58 +215,60 @@ class _MyState extends State<Searchpage> {
                 ),
                 filteredEmployees.isEmpty
                     ? Padding(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: Center(
-                          child: Text(
-                            "No Results Found",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.redAccent,
-                            ),
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Center(
+                    child: Text(
+                      "No Results Found",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  ),
+                )
+                    : GridView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: filteredEmployees.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 3 / 2,
+                  ),
+                  itemBuilder: (context, index) {
+                    final employee = filteredEmployees[index];
+                    return GestureDetector(
+                      onTap: () {
+                        _onEmployeeTap(employee);
+                      },
+                      child: Card(
+                        elevation: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.all(25.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: Text(
+                                  (employee['first_name'] ?? '').toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Center(
+                                  child: Text(employee['user_role'] ?? '')),
+                            ],
                           ),
                         ),
-                      )
-                    : GridView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: filteredEmployees.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // Number of columns
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          childAspectRatio:
-                              3 / 2, // Aspect ratio for the grid items
-                        ),
-                        itemBuilder: (context, index) {
-                          final employee = filteredEmployees[index];
-                          return Card(
-                            elevation: 4,
-                            child: Padding(
-                              padding: const EdgeInsets.all(25.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Center(
-                                    child: Text(
-                                      (employee['first_name'] ?? '')
-                                          .toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Center(
-                                      child: Text(employee['user_role'] ?? '')),
-                                  // Add other details you want to display
-                                ],
-                              ),
-                            ),
-                          );
-                        },
                       ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -248,7 +279,7 @@ class _MyState extends State<Searchpage> {
               backgroundColor: Colors.white,
               elevation: 0,
               mini: true,
-              onPressed: (() => signout()),
+              onPressed: () => signout(),
               child: Icon(
                 Icons.login_rounded,
                 size: 30,
