@@ -103,13 +103,15 @@ class _HomepageState extends State<Homepage> {
 
     // Use the company parameter here
     return Scaffold(
-        body: IndexedStack(
-          index: currentIndex,
-          children:  [
-            new Calendarscreen(companyName: widget.companyName),
-            new Todayscreen(companyName: widget.companyName),
-            new Profilescreen(companyName: widget.companyName),
-          ],
+        body: SafeArea(
+          child: IndexedStack(
+            index: currentIndex,
+            children:  [
+              new Calendarscreen(companyName: widget.companyName),
+              new Todayscreen(companyName: widget.companyName),
+              new Profilescreen(companyName: widget.companyName),
+            ],
+          ),
         ),
         bottomNavigationBar: Container(
           height: 70,

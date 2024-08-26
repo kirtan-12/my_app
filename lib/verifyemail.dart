@@ -34,10 +34,12 @@ class _VerifyState extends State<Verify> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Verification"),),
-      body: Padding(
-        padding: const EdgeInsets.all(28.0),
-        child: Center(
-          child: Text("Open Your mail and Click on Link Provided to verify email & reload this page"),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(28.0),
+          child: Center(
+            child: Text("Open Your mail and Click on Link Provided to verify email & reload this page"),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

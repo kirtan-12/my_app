@@ -72,101 +72,103 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
       appBar: AppBar(
         title: Text("Details"),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Employee Details Section
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Name: ${widget.employee['first_name']} ${widget.employee['last_name']}",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Text("Email: ${widget.employee['email']}"),
-                  SizedBox(height: 10),
-                  Text("Role: ${widget.employee['user_role']}"),
-                ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Employee Details Section
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Name: ${widget.employee['first_name']} ${widget.employee['last_name']}",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 10),
+                    Text("Email: ${widget.employee['email']}"),
+                    SizedBox(height: 10),
+                    Text("Role: ${widget.employee['user_role']}"),
+                  ],
+                ),
               ),
-            ),
-            SizedBox(height: 20),
-            // Calendar Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: TableCalendar(
-                focusedDay: _focusedDay,
-                firstDay: DateTime.utc(2020, 1, 1),
-                lastDay: DateTime.utc(2030, 12, 31),
-                calendarFormat: CalendarFormat.month,
-                formatAnimationDuration: Duration.zero,
-                availableCalendarFormats: const {
-                  CalendarFormat.month: 'Month',
-                },
-                selectedDayPredicate: (day) {
-                  return isSameDay(_selectedDay, day);
-                },
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    _selectedDay = selectedDay;
-                    _focusedDay = focusedDay;
-                  });
-                },
-                calendarBuilders: CalendarBuilders(
-                  defaultBuilder: (context, day, focusedDay) {
-                    // Normalize the day to match the keys in attendanceMap
-                    final normalizedDay = DateTime(day.year, day.month, day.day);
-
-                    if (attendanceMap.containsKey(normalizedDay)) {
-                      // Present day (Green) or Absent day (Red)
-                      final isPresent = attendanceMap[normalizedDay] ?? false;
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: isPresent ? Colors.green : Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${day.day}',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      );
-                    } else {
-                      // No record day (White)
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${day.day}',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      );
-                    }
+              SizedBox(height: 20),
+              // Calendar Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: TableCalendar(
+                  focusedDay: _focusedDay,
+                  firstDay: DateTime.utc(2020, 1, 1),
+                  lastDay: DateTime.utc(2030, 12, 31),
+                  calendarFormat: CalendarFormat.month,
+                  formatAnimationDuration: Duration.zero,
+                  availableCalendarFormats: const {
+                    CalendarFormat.month: 'Month',
                   },
-                ),
-                calendarStyle: CalendarStyle(
-                  defaultDecoration: BoxDecoration(
-                    color: Colors.transparent, // Ensure transparency
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_selectedDay, day);
+                  },
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                  },
+                  calendarBuilders: CalendarBuilders(
+                    defaultBuilder: (context, day, focusedDay) {
+                      // Normalize the day to match the keys in attendanceMap
+                      final normalizedDay = DateTime(day.year, day.month, day.day);
+
+                      if (attendanceMap.containsKey(normalizedDay)) {
+                        // Present day (Green) or Absent day (Red)
+                        final isPresent = attendanceMap[normalizedDay] ?? false;
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: isPresent ? Colors.green : Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${day.day}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        );
+                      } else {
+                        // No record day (White)
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${day.day}',
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
-                  todayDecoration: BoxDecoration(
-                    color: Colors.blueAccent, // Highlight today's date
-                    shape: BoxShape.circle,
-                  ),
-                  selectedDecoration: BoxDecoration(
-                    color: Colors.orangeAccent, // Highlight selected date
-                    shape: BoxShape.circle,
+                  calendarStyle: CalendarStyle(
+                    defaultDecoration: BoxDecoration(
+                      color: Colors.transparent, // Ensure transparency
+                    ),
+                    todayDecoration: BoxDecoration(
+                      color: Colors.blueAccent, // Highlight today's date
+                      shape: BoxShape.circle,
+                    ),
+                    selectedDecoration: BoxDecoration(
+                      color: Colors.orangeAccent, // Highlight selected date
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

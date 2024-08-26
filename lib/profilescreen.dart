@@ -78,7 +78,7 @@ class _ProfilescreenState extends State<Profilescreen> {
         child: Column(
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 80, bottom: 24),
+              margin: const EdgeInsets.only(top: 30, bottom: 24),
               height: 120,
               width: 120,
               alignment: Alignment.center,

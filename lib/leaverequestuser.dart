@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:my_app/historyuser.dart';
 
 class Leaverequest extends StatefulWidget {
   final String companyName;
@@ -89,59 +90,76 @@ class _LeaverequestState extends State<Leaverequest> {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          title: Text("Leave Request"),
+          backgroundColor: primary,
+          actions: [
+            Container(
+              width: 50,
+              height: 50,
+              child: IconButton(
+                icon: Icon(Icons.history, size: 30),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => History(companyName: widget.companyName,)),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        title: Text("Leave Request"),
-        backgroundColor: primary,
-      ),
-      body: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  margin: EdgeInsets.symmetric(horizontal: screenWidth / 22),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      fieldTitle("Reason for leave"),
-                      customFieldi("Message", addressController, false),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Container(
-                width: screenWidth,
-                margin: EdgeInsets.symmetric(horizontal: screenWidth / 22),
-                child: ElevatedButton(
-                  onPressed: submitLeaveRequest,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Container(
+                      alignment: Alignment.centerLeft,
+                      margin: EdgeInsets.symmetric(horizontal: screenWidth / 22),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          fieldTitle("Reason for leave"),
+                          customFieldi("Message", addressController, false),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Text(
-                    "Submit",
-                    style: TextStyle(
-                      color: Colors.white,
+                  SizedBox(height: 20),
+                  Container(
+                    width: screenWidth,
+                    margin: EdgeInsets.symmetric(horizontal: screenWidth / 22),
+                    child: ElevatedButton(
+                      onPressed: submitLeaveRequest,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Submit",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
     );
   }
 

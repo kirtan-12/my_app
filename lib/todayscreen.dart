@@ -472,12 +472,12 @@ class _TodayscreenState extends State<Todayscreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.only(left: 20,right: 20),
             child: Column(
               children: [
                 Container(
                   alignment: Alignment.centerLeft,
-                  margin: const EdgeInsets.only(top: 30),
+                  margin: const EdgeInsets.only(top: 10),
                   child: Text(
                     "Welcome",
                     style: TextStyle(
@@ -834,8 +834,8 @@ class _TodayscreenState extends State<Todayscreen> {
             ),
           ),
           Positioned(
-            top: 50,
-            right: 20,
+            top: 15,
+            right: 10,
             child: FloatingActionButton(
               backgroundColor: Colors.white,
               elevation: 0,

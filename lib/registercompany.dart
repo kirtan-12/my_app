@@ -78,139 +78,141 @@ class _RegistercompanyState extends State<Registercompany> {
     screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(title: Text("Register Your Company"),),
-      resizeToAvoidBottomInset: false,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top:10),
-              child: Container(
-                alignment: Alignment.centerLeft,
-                margin: EdgeInsets.symmetric(horizontal: screenWidth/22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    fieldTitle("Contact Person Name"),
-                    customField("Name", personController, false),
-                    fieldTitle("Contact Person Mobile Number"),
-                    customFielde("Mobile Number", contactController, false,),
-                    fieldTitle("Company Name"),
-                    customField("Company Name", companyController, false),
-                    fieldTitle("Address"),
-                    customFieldi("Address", addressController, false),
-                    fieldTitle("Company Location"),
-                    Container(
-                      height: 100,
-                      width: screenWidth,
-                      margin: EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        //color: primary,
-                        borderRadius:const BorderRadius.all(Radius.circular(25)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.white,
-                            blurRadius: 10,
-                            offset: Offset(2,2),
+        appBar: AppBar(title: Text("Register Your Company"),),
+        resizeToAvoidBottomInset: false,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top:10),
+                  child: Container(
+                    alignment: Alignment.centerLeft,
+                    margin: EdgeInsets.symmetric(horizontal: screenWidth/22),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        fieldTitle("Contact Person Name"),
+                        customField("Name", personController, false),
+                        fieldTitle("Contact Person Mobile Number"),
+                        customFielde("Mobile Number", contactController, false,),
+                        fieldTitle("Company Name"),
+                        customField("Company Name", companyController, false),
+                        fieldTitle("Address"),
+                        customFieldi("Address", addressController, false),
+                        fieldTitle("Company Location"),
+                        Container(
+                          height: 100,
+                          width: screenWidth,
+                          margin: EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            //color: primary,
+                            borderRadius:const BorderRadius.all(Radius.circular(25)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white,
+                                blurRadius: 10,
+                                offset: Offset(2,2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: _location == null
-                          ? ElevatedButton(
-                        onPressed: () async {
-                          final location = await _getLocation();
-                          setState(() {
-                            _location = location;
-                          });
-                        },
-                        child: Text('Select Location'),
-                      )
-                          : FutureBuilder(
-                        future: _getAddressFromLatLng(_location!),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            return Column(
-                              children: [
-                                Text('Selected Location:'),
-                                Text(snapshot.data!),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    final location = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => MapScreen()),
-                                    );
-                                    setState(() {
-                                      _location = location;
-                                    });
-                                  },
-                                  child: Text('Change Location'),
+                          child: _location == null
+                              ? ElevatedButton(
+                            onPressed: () async {
+                              final location = await _getLocation();
+                              setState(() {
+                                _location = location;
+                              });
+                            },
+                            child: Text('Select Location'),
+                          )
+                              : FutureBuilder(
+                            future: _getAddressFromLatLng(_location!),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return Column(
+                                  children: [
+                                    Text('Selected Location:'),
+                                    Text(snapshot.data!),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        final location = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => MapScreen()),
+                                        );
+                                        setState(() {
+                                          _location = location;
+                                        });
+                                      },
+                                      child: Text('Change Location'),
+                                    ),
+                                  ],
+                                );
+                              } else {
+                                return Center(child: CircularProgressIndicator());
+                              }
+                            },
+                          ),
+                        ),
+                        Container(
+                          height: 60,
+                          width: screenWidth,
+                          margin: EdgeInsets.only(top: screenHeight / 30),
+                          decoration: BoxDecoration(
+                            //color: primary,
+                            borderRadius: const BorderRadius.all(Radius.circular(25)),
+                          ),
+                          child: ElevatedButton(onPressed: (() async{
+                            if (personController.text == "" && contactController.text == "" && companyController.text == "" && addressController.text == ""){
+                              print("Enter Required Fields");
+                            } else {
+                              await addData(
+                                personController.text.toString(),
+                                contactController.text.toString(),
+                                companyController.text.toString(),
+                                addressController.text.toString(),
+                                _location!,
+                              );
+                              personController.clear();
+                              contactController.clear();
+                              companyController.clear();
+                              addressController.clear();
+          
+                              //Navigation to Search Page
+                              Navigator.push(
+                                context,MaterialPageRoute(builder: (context) => Login()),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Your Company Will be Reviewed"),
+                                  duration: Duration(seconds: 5),
                                 ),
-                              ],
-                            );
-                          } else {
-                            return Center(child: CircularProgressIndicator());
-                          }
-                        },
-                      ),
-                    ),
-                    Container(
-                      height: 60,
-                      width: screenWidth,
-                      margin: EdgeInsets.only(top: screenHeight / 30),
-                      decoration: BoxDecoration(
-                        //color: primary,
-                        borderRadius: const BorderRadius.all(Radius.circular(25)),
-                      ),
-                      child: ElevatedButton(onPressed: (() async{
-                        if (personController.text == "" && contactController.text == "" && companyController.text == "" && addressController.text == ""){
-                          print("Enter Required Fields");
-                        } else {
-                          await addData(
-                            personController.text.toString(),
-                            contactController.text.toString(),
-                            companyController.text.toString(),
-                            addressController.text.toString(),
-                            _location!,
-                          );
-                          personController.clear();
-                          contactController.clear();
-                          companyController.clear();
-                          addressController.clear();
-
-                          //Navigation to Search Page
-                          Navigator.push(
-                            context,MaterialPageRoute(builder: (context) => Login()),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Your Company Will be Reviewed"),
-                              duration: Duration(seconds: 5),
+                              );
+                            }
+                          }),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
                             ),
-                          );
-                        }
-                      }),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        child: Center(
-                          child: Text(
-                            "Submit",
-                            style: TextStyle(
-                              fontSize: screenWidth / 25,
-                              color: Colors.white,
-                              letterSpacing: 2,
+                            child: Center(
+                              child: Text(
+                                "Submit",
+                                style: TextStyle(
+                                  fontSize: screenWidth / 25,
+                                  color: Colors.white,
+                                  letterSpacing: 2,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            )
-          ],
+                  ),
+                )
+              ],
+            ),
+          ),
         ),
-      ),
     );
   }
   Widget fieldTitle(String title) {

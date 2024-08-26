@@ -145,12 +145,12 @@ class _MyState extends State<Searchpage> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.only(right: 20,left: 20),
             child: Column(
               children: [
                 Container(
                   alignment: Alignment.centerLeft,
-                  margin: const EdgeInsets.only(top: 30),
+                  margin: const EdgeInsets.only(top: 15),
                   child: Text(
                     "Welcome",
                     style: TextStyle(
@@ -175,7 +175,7 @@ class _MyState extends State<Searchpage> {
                     child: Column(
                       children: [
                         Container(
-                          margin: EdgeInsets.only(top: 20),
+                          margin: EdgeInsets.only(top: 20,bottom: 20),
                           padding: EdgeInsets.all(5),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
@@ -192,7 +192,7 @@ class _MyState extends State<Searchpage> {
                             children: [
                               Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 15),
+                                  padding: const EdgeInsets.only(left: 20),
                                   child: TextFormField(
                                     controller: searchController,
                                     enableSuggestions: false,
@@ -273,8 +273,8 @@ class _MyState extends State<Searchpage> {
             ),
           ),
           Positioned(
-            top: 50,
-            right: 20,
+            top: 15,
+            right: 15,
             child: FloatingActionButton(
               backgroundColor: Colors.white,
               elevation: 0,

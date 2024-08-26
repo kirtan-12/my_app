@@ -37,12 +37,14 @@ class _AdminhomepageState extends State<Adminhomepage> {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children:[
-          Searchpage(companyName: widget.companyName,),
-          Profilescreen(companyName: widget.companyName,),
-        ],
+      body: SafeArea(
+        child: IndexedStack(
+          index: currentIndex,
+          children:[
+            Searchpage(companyName: widget.companyName,),
+            Profilescreen(companyName: widget.companyName,),
+          ],
+        ),
       ),
       bottomNavigationBar: Container(
         height: 70,

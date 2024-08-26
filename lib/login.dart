@@ -146,103 +146,103 @@ class _LoginState extends State<Login> {
 
     return isloading ? Center(child: CircularProgressIndicator(),) : KeyboardVisibilityProvider(
         child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          body: Column(
-              children: [
-                KeyboardVisibilityBuilder(
-                  builder: (context, isKeyboardVisible){
-                    return isKeyboardVisible? SizedBox(height: screenHeight / 30,) :Container(
-                      height: screenHeight / 3,
-                      width: screenWidth,
-                      decoration: BoxDecoration(
-                        color: primary,
-                        borderRadius: BorderRadius.only(
-                          bottomRight: Radius.circular(70),
+            resizeToAvoidBottomInset: false,
+            body: Column(
+                children: [
+                  KeyboardVisibilityBuilder(
+                    builder: (context, isKeyboardVisible){
+                      return isKeyboardVisible? SizedBox(height: screenHeight / 30,) :Container(
+                        height: screenHeight / 3,
+                        width: screenWidth,
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: BorderRadius.only(
+                            bottomRight: Radius.circular(70),
+                          ),
                         ),
-                      ),
-                      child: Center(
-                        child: Icon(Icons.person, color: Colors.white, size: screenWidth / 5,),
-                      ),
-                    );
-                  }
-                ),
-                Container(
-                  margin: EdgeInsets.only(
-                      top: screenHeight/50,
-                      bottom: screenHeight / 50
+                        child: Center(
+                          child: Icon(Icons.person, color: Colors.white, size: screenWidth / 5,),
+                        ),
+                      );
+                    }
                   ),
-                  child: Text(
-                    "Login",
-                    style: TextStyle(
-                      fontSize: screenHeight / 30,
+                  Container(
+                    margin: EdgeInsets.only(
+                        top: screenHeight/50,
+                        bottom: screenHeight / 50,
+                    ),
+                    child: Text(
+                      "Login",
+                      style: TextStyle(
+                        fontSize: screenHeight / 30,
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  alignment: Alignment.centerLeft,
-                  margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      fieldTitle("Company"),
-                      isCompanyLoading? Center(
-                          child: CircularProgressIndicator()): companyDropdown(),
-                      fieldTitle("Employee ID"),
-                      customField("Enter your ID", email,false),
-                      fieldTitle("Password"),
-                      customFielde("Enter your password", password,true),
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        fieldTitle("Company"),
+                        isCompanyLoading? Center(
+                            child: CircularProgressIndicator()): companyDropdown(),
+                        fieldTitle("Employee ID"),
+                        customField("Enter your ID", email,false),
+                        fieldTitle("Password"),
+                        customFielde("Enter your password", password,true),
 
-                      Container(
-                        width: screenWidth,
-                        margin: EdgeInsets.only(top: screenHeight/60),
-                        height: 60,
-                        decoration: BoxDecoration(
-                          //color: primary,
-                          borderRadius: const BorderRadius.all(Radius.circular(25))
-                        ),
-                        child: ElevatedButton(onPressed: (() => signIn()),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                        Container(
+                          width: screenWidth,
+                          margin: EdgeInsets.only(top: screenHeight/60),
+                          height: 60,
+                          decoration: BoxDecoration(
+                            //color: primary,
+                            borderRadius: const BorderRadius.all(Radius.circular(25))
                           ),
-                          child: Center(
-                            child: Text("Login",
-                              style: TextStyle(fontSize: screenWidth/25,
-                                color: Colors.white,
-                                letterSpacing: 2,
+                          child: ElevatedButton(onPressed: (() => signIn()),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: Center(
+                              child: Text("Login",
+                                style: TextStyle(fontSize: screenWidth/25,
+                                  color: Colors.white,
+                                  letterSpacing: 2,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      )
+                        )
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 30, top: 10),
+                        child: TextButton(onPressed: (()=> Get.to(Signup(companyName: selectedCompany?? ''))), child: Text("Register Now")),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 30,top: 10),
+                        child: TextButton(onPressed: (()=> Get.to(Forgot())), child: Text("Forgot Password?")),
+                      ),
                     ],
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 30, top: 10),
-                      child: TextButton(onPressed: (()=> Get.to(Signup(companyName: selectedCompany?? ''))), child: Text("Register Now")),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 30,top: 10),
-                      child: TextButton(onPressed: (()=> Get.to(Forgot())), child: Text("Forgot Password?")),
-                    ),
-                  ],
-                ),
-                // ElevatedButton(onPressed: (() => Get.to(Forgot())),
-                //     child: Text("Forgot Password ?")),
+                  // ElevatedButton(onPressed: (() => Get.to(Forgot())),
+                  //     child: Text("Forgot Password ?")),
 
-                TextButton(onPressed: (()=> Get.to(Registercompany())), child: Text("Company Register")),
-              ],
+                  TextButton(onPressed: (()=> Get.to(Registercompany())), child: Text("Company Register")),
+                ],
+            ),
           ),
-        ),
     );
   }
 
   Widget fieldTitle(String title) {
     return Container(
-      margin: EdgeInsets.only(bottom: 3),
+      margin: EdgeInsets.only(bottom: 1),
       child: Text(
         title,
         style: TextStyle(
@@ -255,7 +255,7 @@ class _LoginState extends State<Login> {
   Widget customField(String hint , TextEditingController controller,bool obscure){
     return Container(
       width: screenWidth,
-      margin: EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(12)),

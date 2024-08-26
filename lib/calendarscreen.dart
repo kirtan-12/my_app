@@ -41,7 +41,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
 
     return Scaffold(
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.only(left: 20,right: 20),
         child: Column(children: [
           Container(
             alignment: Alignment.centerLeft,
@@ -133,7 +133,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
                       if (DateFormat('MMMM').format(recordDate) == _month) {
                         return Container(
                           margin: EdgeInsets.only(
-                              top: index > 0 ? 12 : 0,
+                              top: index > 0 ? 20 : 18,
                               bottom: 20,
                               right: 6,
                               left: 6),

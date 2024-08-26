@@ -81,72 +81,74 @@ class _NotifyState extends State<Notify> {
         ),
         backgroundColor: primary,
       ),
-      body: ListView.builder(
-        itemCount: _leaveRequests.length, // Number of leave requests
-        itemBuilder: (context, index) {
-          final request = _leaveRequests[index];
-          final requestId = request.id;
-          final reason = request['reason'];
-          final status = request['status'];
-          final requesterEmail = request['requesterEmail'];
-          final requesterName = request['requesterName'].toUpperCase();
+      body: SafeArea(
+        child: ListView.builder(
+          itemCount: _leaveRequests.length, // Number of leave requests
+          itemBuilder: (context, index) {
+            final request = _leaveRequests[index];
+            final requestId = request.id;
+            final reason = request['reason'];
+            final status = request['status'];
+            final requesterEmail = request['requesterEmail'];
+            final requesterName = request['requesterName'].toUpperCase();
 
-          return Card(
-            child: Column(
-              children: [
-                ListTile(
-                  title: Text(
-                    'Leave Request from \n$requesterName',
+            return Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    title: Text(
+                      'Leave Request from \n$requesterName',
+                    ),
+                    subtitle: Text('Email: $requesterEmail\nReason: $reason\nStatus: $status'),
+                    onTap: () {
+                      setState(() {
+                        _isExpanded[index] = !_isExpanded[index];
+                      });
+                    },
                   ),
-                  subtitle: Text('Email: $requesterEmail\nReason: $reason\nStatus: $status'),
-                  onTap: () {
-                    setState(() {
-                      _isExpanded[index] = !_isExpanded[index];
-                    });
-                  },
-                ),
-                _isExpanded[index]
-                    ? Container(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Reason: $reason'),
-                      Text('Status: $status'),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          ElevatedButton(
-                            onPressed: status == 'Pending'
-                                ? () => _updateLeaveRequestStatus(requestId, 'Approved')
-                                : null, // Disable button if not pending
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white
+                  _isExpanded[index]
+                      ? Container(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Reason: $reason'),
+                        Text('Status: $status'),
+                        SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: status == 'Pending'
+                                  ? () => _updateLeaveRequestStatus(requestId, 'Approved')
+                                  : null, // Disable button if not pending
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white
+                              ),
+                              child: Text('Approve'),
                             ),
-                            child: Text('Approve'),
-                          ),
-                          ElevatedButton(
-                            onPressed: status == 'Pending'
-                                ? () => _updateLeaveRequestStatus(requestId, 'Declined')
-                                : null, // Disable button if not pending
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white
+                            ElevatedButton(
+                              onPressed: status == 'Pending'
+                                  ? () => _updateLeaveRequestStatus(requestId, 'Declined')
+                                  : null, // Disable button if not pending
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white
+                              ),
+                              child: Text('Decline'),
                             ),
-                            child: Text('Decline'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                )
-                    : SizedBox(),
-              ],
-            ),
-          );
-        },
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                      : SizedBox(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

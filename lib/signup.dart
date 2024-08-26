@@ -184,442 +184,444 @@ class _SignupState extends State<Signup> {
 
     return Scaffold(
       appBar: AppBar(title: Text("Sign Up"),),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: ListView(
-          children: [
-            Container(
-              alignment: Alignment.center,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-              child: Center(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: ListView(
+            children: [
+              Container(
+                alignment: Alignment.center,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                child: Center(
+                  child: Column(
+                    crossAxisAlignment:CrossAxisAlignment.start ,
+                    children: [
+                      _image!= null
+                          ?CircleAvatar(
+                        radius: 60, // adjust the radius as needed
+                        backgroundImage: Image.file(_image!).image,
+                      )
+                          : Icon(Icons.image_rounded, size: 125),
+                      TextButton(onPressed: () {
+                        captureImages(
+                        );
+                      },
+                          child: Text("Take your photo")
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.symmetric(
+                    horizontal: screenWidth / 12
+                ),
                 child: Column(
                   crossAxisAlignment:CrossAxisAlignment.start ,
                   children: [
-                    _image!= null
-                        ?CircleAvatar(
-                      radius: 60, // adjust the radius as needed
-                      backgroundImage: Image.file(_image!).image,
-                    )
-                        : Icon(Icons.image_rounded, size: 125),
-                    TextButton(onPressed: () {
-                      captureImages(
-                      );
-                    },
-                        child: Text("Take your photo")
+                    Container(
+                      margin: const EdgeInsets.only (bottom: 6),
+                      child: Text(
+                        "Company Name:",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth / 20,
+                        ),
+                      ),
+                    ),
+                    isCompanyLoading? Center(
+                        child: CircularProgressIndicator()): companyDropdown(),
+                  ],
+                ),
+              ),
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.symmetric(
+                  horizontal: screenWidth / 12
+                ),
+                child: Column(
+                  crossAxisAlignment:CrossAxisAlignment.start ,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only (bottom: 6),
+                      child: Text(
+                        "First Name:",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth / 20,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: screenWidth,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        boxShadow:[
+                          BoxShadow(
+                            color: Colors.grey,
+                            blurRadius: 10,
+                            offset: Offset(2 , 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: screenWidth / 12,
+                            child: Icon(
+                              Icons.person,
+                              color: primary,
+                              size: screenWidth /16,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: firstNameController,
+                              enableSuggestions: false,
+                              autocorrect: false,
+                              decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: screenHeight / 70,
+                                  ),
+                                  border: InputBorder.none,
+                                  hintText: "Type here "
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(
-                  horizontal: screenWidth / 12
-              ),
-              child: Column(
-                crossAxisAlignment:CrossAxisAlignment.start ,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only (bottom: 6),
-                    child: Text(
-                      "Company Name:",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth / 20,
-                      ),
-                    ),
-                  ),
-                  isCompanyLoading? Center(
-                      child: CircularProgressIndicator()): companyDropdown(),
-                ],
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(
-                horizontal: screenWidth / 12
-              ),
-              child: Column(
-                crossAxisAlignment:CrossAxisAlignment.start ,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only (bottom: 6),
-                    child: Text(
-                      "First Name:",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth / 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: screenWidth,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow:[
-                        BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 10,
-                          offset: Offset(2 , 2),
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                child: Column(
+                  crossAxisAlignment:CrossAxisAlignment.start ,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only (bottom: 6),
+                      child: Text(
+                        "Last Name:",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth / 20,
                         ),
-                      ],
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: screenWidth / 12,
-                          child: Icon(
-                            Icons.person,
-                            color: primary,
-                            size: screenWidth /16,
+                    Container(
+                      width: screenWidth,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        boxShadow:[
+                          BoxShadow(
+                            color: Colors.grey,
+                            blurRadius: 10,
+                            offset: Offset(2 , 2),
                           ),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: firstNameController,
-                            enableSuggestions: false,
-                            autocorrect: false,
-                            decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: screenHeight / 70,
-                                ),
-                                border: InputBorder.none,
-                                hintText: "Type here "
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: screenWidth / 12,
+                            child: Icon(
+                              Icons.person,
+                              color: primary,
+                              size: screenWidth /16,
                             ),
                           ),
-                        )
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-              child: Column(
-                crossAxisAlignment:CrossAxisAlignment.start ,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only (bottom: 6),
-                    child: Text(
-                      "Last Name:",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth / 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: screenWidth,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow:[
-                        BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 10,
-                          offset: Offset(2 , 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: screenWidth / 12,
-                          child: Icon(
-                            Icons.person,
-                            color: primary,
-                            size: screenWidth /16,
-                          ),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: lastNameController,
-                            enableSuggestions: false,
-                            autocorrect: false,
-                            decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: screenHeight / 70,
-                                ),
-                                border: InputBorder.none,
-                                hintText: "Type here "
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-              child: Column(
-                crossAxisAlignment:CrossAxisAlignment.start ,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only (bottom: 6),
-                    child: Text(
-                      "Email ID:",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth / 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: screenWidth,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow:[
-                        BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 10,
-                          offset: Offset(2 , 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: screenWidth / 12,
-                          child: Icon(
-                            Icons.mail,
-                            color: primary,
-                            size: screenWidth /16,
-                          ),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: email,
-                            enableSuggestions: false,
-                            autocorrect: false,
-                            decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: screenHeight / 70,
-                                ),
-                                border: InputBorder.none,
-                                hintText: "Type here "
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-              child: Column(
-                crossAxisAlignment:CrossAxisAlignment.start ,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only (bottom: 6),
-                    child: Text(
-                      "Mobile Number:",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth / 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: screenWidth,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow:[
-                        BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 10,
-                          offset: Offset(2 , 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: screenWidth / 15,
-                          child: Icon(
-                            Icons.phone,
-                            color: primary,
-                            size: screenWidth /16,
-                          ),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: mobileNumberController,
-                            keyboardType: TextInputType.phone,
-                            enableSuggestions: false,
-                            autocorrect: false,
-                            decoration: InputDecoration(
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: screenHeight / 70,
+                          Expanded(
+                            child: TextFormField(
+                              controller: lastNameController,
+                              enableSuggestions: false,
+                              autocorrect: false,
+                              decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: screenHeight / 70,
+                                  ),
+                                  border: InputBorder.none,
+                                  hintText: "Type here "
                               ),
-                              border: InputBorder.none,
-                              hintText: "Phone number ",
                             ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              _TenDigitFormatter(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-              child: Column(
-                crossAxisAlignment:CrossAxisAlignment.start ,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only (bottom: 6),
-                    child: Text(
-                      "Password:",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth / 20,
+                          )
+                        ],
                       ),
                     ),
-                  ),
-                  Container(
-                    width: screenWidth,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow:[
-                        BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 10,
-                          offset: Offset(2 , 2),
+                  ],
+                ),
+              ),
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                child: Column(
+                  crossAxisAlignment:CrossAxisAlignment.start ,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only (bottom: 6),
+                      child: Text(
+                        "Email ID:",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth / 20,
                         ),
-                      ],
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: screenWidth / 30,
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: password,
-                            enableSuggestions: false,
-                            autocorrect: false,
-                            decoration: InputDecoration(
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: screenHeight / 70,
+                    Container(
+                      width: screenWidth,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        boxShadow:[
+                          BoxShadow(
+                            color: Colors.grey,
+                            blurRadius: 10,
+                            offset: Offset(2 , 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: screenWidth / 12,
+                            child: Icon(
+                              Icons.mail,
+                              color: primary,
+                              size: screenWidth /16,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: email,
+                              enableSuggestions: false,
+                              autocorrect: false,
+                              decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: screenHeight / 70,
+                                  ),
+                                  border: InputBorder.none,
+                                  hintText: "Type here "
                               ),
-                              border: InputBorder.none,
-                              hintText: "Password "
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-              child: Column(
-                crossAxisAlignment:CrossAxisAlignment.start ,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only (bottom: 0),
-                    child: Text(
-                      "Gender:",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth / 20,
+                          )
+                        ],
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      Radio(
-                          value: 'Male',
+                  ],
+                ),
+              ),
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                child: Column(
+                  crossAxisAlignment:CrossAxisAlignment.start ,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only (bottom: 6),
+                      child: Text(
+                        "Mobile Number:",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth / 20,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: screenWidth,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        boxShadow:[
+                          BoxShadow(
+                            color: Colors.grey,
+                            blurRadius: 10,
+                            offset: Offset(2 , 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: screenWidth / 15,
+                            child: Icon(
+                              Icons.phone,
+                              color: primary,
+                              size: screenWidth /16,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: mobileNumberController,
+                              keyboardType: TextInputType.phone,
+                              enableSuggestions: false,
+                              autocorrect: false,
+                              decoration: InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: screenHeight / 70,
+                                ),
+                                border: InputBorder.none,
+                                hintText: "Phone number ",
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                _TenDigitFormatter(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                child: Column(
+                  crossAxisAlignment:CrossAxisAlignment.start ,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only (bottom: 6),
+                      child: Text(
+                        "Password:",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth / 20,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: screenWidth,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        boxShadow:[
+                          BoxShadow(
+                            color: Colors.grey,
+                            blurRadius: 10,
+                            offset: Offset(2 , 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: screenWidth / 30,
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: password,
+                              enableSuggestions: false,
+                              autocorrect: false,
+                              decoration: InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: screenHeight / 70,
+                                ),
+                                border: InputBorder.none,
+                                hintText: "Password "
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+                child: Column(
+                  crossAxisAlignment:CrossAxisAlignment.start ,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only (bottom: 0),
+                      child: Text(
+                        "Gender:",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth / 20,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Radio(
+                            value: 'Male',
+                            groupValue: _gender,
+                            onChanged: (value){
+                              setState(() {
+                                _gender = value as String;
+                              });
+                            },
+                        ),
+                        Text('Male'),
+                        Radio(
+                          value: 'Female',
                           groupValue: _gender,
                           onChanged: (value){
                             setState(() {
                               _gender = value as String;
                             });
                           },
-                      ),
-                      Text('Male'),
-                      Radio(
-                        value: 'Female',
-                        groupValue: _gender,
-                        onChanged: (value){
-                          setState(() {
-                            _gender = value as String;
-                          });
-                        },
-                      ),
-                      Text('Female'),
-                      Radio(
-                        value: 'Other',
-                        groupValue: _gender,
-                        onChanged: (value) {
-                          setState(() {
-                            _gender = value as String;
-                          });
-                        },
-                      ),
-                      Text('Other'),
-                    ],
-                  ),
-                  Container(
-                    height: 40,
-                    width: screenWidth,
-                    margin: EdgeInsets.only(top: screenHeight/30),
-                    decoration: BoxDecoration(
-                      color: primary,
-                      borderRadius: const BorderRadius.all(Radius.circular(15)),
+                        ),
+                        Text('Female'),
+                        Radio(
+                          value: 'Other',
+                          groupValue: _gender,
+                          onChanged: (value) {
+                            setState(() {
+                              _gender = value as String;
+                            });
+                          },
+                        ),
+                        Text('Other'),
+                      ],
                     ),
-                    child: ElevatedButton(onPressed: (() => signup()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                    Container(
+                      height: 40,
+                      width: screenWidth,
+                      margin: EdgeInsets.only(top: screenHeight/30),
+                      decoration: BoxDecoration(
+                        color: primary,
+                        borderRadius: const BorderRadius.all(Radius.circular(15)),
                       ),
-                      child: Center(
-                        child : Text(
-                          "Register",
-                          style: TextStyle(
-                            fontSize: screenWidth / 25,
-                            color: Colors.white,
-                            letterSpacing: 2,
+                      child: ElevatedButton(onPressed: (() => signup()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: Center(
+                          child : Text(
+                            "Register",
+                            style: TextStyle(
+                              fontSize: screenWidth / 25,
+                              color: Colors.white,
+                              letterSpacing: 2,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        
+        // TextField(
+              //   controller: email,
+              //   decoration: InputDecoration(hintText: "Enter Email"),
+              // ),
+              // TextField(
+              //   controller: password,
+              //   decoration: InputDecoration(hintText: "Enter Password"),
+              // ),
+              // ElevatedButton(onPressed: (()=>signup()), child: Text("Sign Up"))
         ),
-
-// TextField(
-            //   controller: email,
-            //   decoration: InputDecoration(hintText: "Enter Email"),
-            // ),
-            // TextField(
-            //   controller: password,
-            //   decoration: InputDecoration(hintText: "Enter Password"),
-            // ),
-            // ElevatedButton(onPressed: (()=>signup()), child: Text("Sign Up"))
       ),
     );
   }

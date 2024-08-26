@@ -66,11 +66,11 @@ class _ProfilescreenState extends State<Profilescreen> {
     screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.only(left: 20,right: 20),
         child: Column(
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 80, bottom: 24),
+              margin: const EdgeInsets.only(top: 60, bottom: 24),
               height: 120,
               width: 120,
               alignment: Alignment.center,
