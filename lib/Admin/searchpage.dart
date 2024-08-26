@@ -2,22 +2,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:my_app/login.dart';
 
 class Searchpage extends StatefulWidget {
   final String companyName;
-  const Searchpage({required this.companyName,super.key});
+  const Searchpage({required this.companyName, super.key});
 
   @override
   State<Searchpage> createState() => _MyState();
 }
 
 class _MyState extends State<Searchpage> {
-
   double screenHeight = 0;
   double screenWidth = 0;
 
   String _username = '';
-  List<Map<String,dynamic>> employees = [];
+  List<Map<String, dynamic>> employees = [];
   List<Map<String, dynamic>> filteredEmployees = [];
   TextEditingController searchController = TextEditingController();
 
@@ -68,8 +68,9 @@ class _MyState extends State<Searchpage> {
           .collection('RegisteredCompany')
           .doc(widget.companyName);
 
-      final employeesSnapshot = await companyDocRef.collection('users')
-          .where('user_role',isNotEqualTo: 'Admin')
+      final employeesSnapshot = await companyDocRef
+          .collection('users')
+          .where('user_role', isNotEqualTo: 'Admin')
           .get();
 
       setState(() {
@@ -98,133 +99,163 @@ class _MyState extends State<Searchpage> {
     });
   }
 
+  signout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     screenHeight = MediaQuery.of(context).size.height;
     screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: const EdgeInsets.only(top: 30),
-              child: Text(
-                "Welcome",
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: screenWidth / 20,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Container(
+                  alignment: Alignment.centerLeft,
+                  margin: const EdgeInsets.only(top: 30),
+                  child: Text(
+                    "Welcome",
+                    style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: screenWidth / 20,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Admin, $_username",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: screenWidth / 15,
+                Container(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Admin, $_username",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: screenWidth / 15,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Container(
-              child: Padding(
-                padding: const EdgeInsets.all(1),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(top: 20),
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            offset: Offset(2, 2),
+                Container(
+                  child: Padding(
+                    padding: const EdgeInsets.all(1),
+                    child: Column(
+                      children: [
+                        Container(
+                          margin: EdgeInsets.only(top: 20),
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 15),
-                              child: TextFormField(
-                                controller: searchController,
-                                enableSuggestions: false,
-                                decoration: InputDecoration(
-                                  hintText: 'Enter Employee ID',
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: screenHeight / 60,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  child: TextFormField(
+                                    controller: searchController,
+                                    enableSuggestions: false,
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter Employee Name',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        vertical: screenHeight / 60,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-            filteredEmployees.isEmpty
-                ? Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: Center(
-                child: Text(
-                  "No Results Found",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.redAccent,
-                  ),
-                ),
-              ),
-            )
-            : GridView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: filteredEmployees.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Number of columns
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 3 / 2, // Aspect ratio for the grid items
-              ),
-              itemBuilder: (context, index) {
-                final employee = filteredEmployees[index];
-                return Card(
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(25.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            (employee['first_name'] ?? '').toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Center(child: Text(employee['user_role'] ?? '')),
-                        // Add other details you want to display
+                        )
                       ],
                     ),
                   ),
-                );
-              },
+                ),
+                filteredEmployees.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Center(
+                          child: Text(
+                            "No Results Found",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ),
+                      )
+                    : GridView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: filteredEmployees.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2, // Number of columns
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio:
+                              3 / 2, // Aspect ratio for the grid items
+                        ),
+                        itemBuilder: (context, index) {
+                          final employee = filteredEmployees[index];
+                          return Card(
+                            elevation: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.all(25.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Center(
+                                    child: Text(
+                                      (employee['first_name'] ?? '')
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 5),
+                                  Center(
+                                      child: Text(employee['user_role'] ?? '')),
+                                  // Add other details you want to display
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 50,
+            right: 20,
+            child: FloatingActionButton(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              mini: true,
+              onPressed: (() => signout()),
+              child: Icon(
+                Icons.login_rounded,
+                size: 30,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

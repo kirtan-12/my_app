@@ -1,8 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:my_app/Admin/notification.dart';
 import 'package:my_app/Admin/profilescreen.dart';
 import 'package:my_app/Admin/searchpage.dart';
+
+import '../login.dart';
 
 
 class Adminhomepage extends StatefulWidget {
@@ -27,6 +30,8 @@ class _AdminhomepageState extends State<Adminhomepage> {
     FontAwesomeIcons.user,
     //FontAwesomeIcons.calendarDays,
   ];
+
+
   @override
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;

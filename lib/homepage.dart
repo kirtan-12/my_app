@@ -184,10 +184,13 @@ class _HomepageState extends State<Homepage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+
+      floatingActionButton: currentIndex == 1
+        ?FloatingActionButton(
         onPressed: (()=>signout()),
-        child: Icon(Icons.login_rounded),
-      ),
+        child: Icon(Icons.login),
+      )
+          : null,
     );
   }
 }

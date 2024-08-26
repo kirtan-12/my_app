@@ -74,17 +74,22 @@ class _ProfilescreenState extends State<Profilescreen> {
               width: 120,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                //color: primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.red,width: 3),
+                image: _imageUrl.isNotEmpty
+                    ? DecorationImage(
+                  image: NetworkImage(_imageUrl),
+                  fit: BoxFit.cover, // Ensures the image fits within the circle
+                )
+                    : null,
               ),
-              child: Center(
-                  child: _imageUrl.isEmpty
-                      ? Icon(
-                    Icons.person,
-                    color: Colors.black54,
-                    size: 80,
-                  ): Image.network(_imageUrl)
-              ),
+              child: _imageUrl.isEmpty
+                  ? Icon(
+                Icons.person,
+                color: Colors.black54,
+                size: 80,
+              )
+                  : null,
             ),
             Align(
               alignment: Alignment.center,
