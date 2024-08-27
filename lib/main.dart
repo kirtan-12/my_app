@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:month_year_picker/month_year_picker.dart';
+import 'package:my_app/splashscreen.dart';
 import 'package:my_app/wrapper.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Login(),
+      home: Splashscreen(),
       localizationsDelegates: const [
         MonthYearPickerLocalizations.delegate,
       ],

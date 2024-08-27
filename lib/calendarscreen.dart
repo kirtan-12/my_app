@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:month_year_picker/month_year_picker.dart';
+import 'package:percent_indicator/percent_indicator.dart'; // Import percent_indicator package
 
 class Calendarscreen extends StatefulWidget {
   final String companyName;
@@ -12,13 +13,17 @@ class Calendarscreen extends StatefulWidget {
   State<Calendarscreen> createState() => _CalendarscreenState();
 }
 
-class _CalendarscreenState extends State<Calendarscreen> {
+class _CalendarscreenState extends State<Calendarscreen>
+    with SingleTickerProviderStateMixin {
   double screenHeight = 0;
   double screenWidth = 0;
 
   Color primary = const Color(0xFFEF444C);
 
   String _month = DateFormat('MMMM').format(DateTime.now());
+  int presentDays = 0;
+  int totalDays = 0;
+  double attendancePercentage = 0.0; // Variable to store attendance percentage
 
   Color _getColor(String status) {
     switch (status) {
@@ -31,6 +36,26 @@ class _CalendarscreenState extends State<Calendarscreen> {
     }
   }
 
+  void _calculateAttendancePercentage(List<QueryDocumentSnapshot> snap) {
+    presentDays = 0;
+    totalDays = 0;
+
+    for (var doc in snap) {
+      totalDays++;
+      if (doc['status'] == 'Present') {
+        presentDays++;
+      }
+    }
+
+    setState(() {
+      if (totalDays > 0) {
+        attendancePercentage = presentDays / totalDays;
+      } else {
+        attendancePercentage = 0.0;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -41,7 +66,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
 
     return Scaffold(
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 20,right: 20),
+        padding: const EdgeInsets.only(left: 20, right: 20),
         child: Column(children: [
           Container(
             alignment: Alignment.centerLeft,
@@ -109,21 +134,48 @@ class _CalendarscreenState extends State<Calendarscreen> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          // Circular Progress Indicator with Animation
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: attendancePercentage),
+            duration: const Duration(seconds: 2),
+            builder: (context, value, child) {
+              return CircularPercentIndicator(
+                radius: 50.0,
+                lineWidth: 6.0,
+                animation: true,
+                percent: value, // Animating this value
+                center: Text(
+                  "${(value * 100).toStringAsFixed(2)}%",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
+                ),
+                circularStrokeCap: CircularStrokeCap.round,
+                progressColor: Colors.green,
+                backgroundColor: Colors.grey.shade300,
+              );
+            },
+          ),
           SizedBox(
-            height: screenHeight / 1.5,
+            height: screenHeight / 1.75,
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("RegisteredCompany")
-                  .doc('${widget.companyName}')
+                  .doc(widget.companyName)
                   .collection("users")
                   .doc(userEmail)
                   .collection("Record")
-                  .where('status',whereIn: ['Present','Absent'])
+                  .where('status', whereIn: ['Present', 'Absent'])
                   .snapshots(),
               builder: (BuildContext context,
                   AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.hasData) {
+                if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                   final snap = snapshot.data!.docs;
+
+                  // Calculate attendance percentage
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _calculateAttendancePercentage(snap);
+                  });
+
                   return ListView.builder(
                     itemCount: snap.length,
                     itemBuilder: (context, index) {
@@ -131,13 +183,15 @@ class _CalendarscreenState extends State<Calendarscreen> {
                       DateTime recordDate = snap[index]['date'].toDate();
 
                       if (DateFormat('MMMM').format(recordDate) == _month) {
-                        return Container(
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
                           margin: EdgeInsets.only(
                               top: index > 0 ? 20 : 18,
-                              bottom: 20,
+                              bottom: 10,
                               right: 6,
                               left: 6),
-                          height: 150,
+                          height: 140,
                           decoration: const BoxDecoration(
                             color: Colors.white,
                             boxShadow: [
@@ -155,7 +209,6 @@ class _CalendarscreenState extends State<Calendarscreen> {
                             children: [
                               Expanded(
                                 child: Container(
-                                  margin: const EdgeInsets.only(),
                                   decoration: BoxDecoration(
                                     color: _getColor(snap[index]['status']),
                                     borderRadius: const BorderRadius.all(
@@ -187,7 +240,7 @@ class _CalendarscreenState extends State<Calendarscreen> {
                                       ),
                                     ),
                                     Text(
-                                      snap[index]['checkIn']?? "--/--",
+                                      snap[index]['checkIn'] ?? "--/--",
                                       style: TextStyle(
                                         fontSize: screenWidth / 20,
                                         color: Colors.black,
@@ -227,7 +280,9 @@ class _CalendarscreenState extends State<Calendarscreen> {
                     },
                   );
                 } else {
-                  return const SizedBox();
+                  return const Center(
+                    child: Text("No attendance records found for this month."),
+                  );
                 }
               },
             ),

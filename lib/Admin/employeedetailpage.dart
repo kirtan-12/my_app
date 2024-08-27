@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:percent_indicator/percent_indicator.dart'; // Import percent indicator package
 import 'package:table_calendar/table_calendar.dart';
 
 class EmployeeDetailsPage extends StatefulWidget {
@@ -21,6 +22,7 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
   Map<DateTime, bool> attendanceMap = {}; // Map to store attendance records
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  double attendancePercentage = 0.0; // Variable to store attendance percentage
 
   @override
   void initState() {
@@ -42,6 +44,9 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
           .get();
 
       setState(() {
+        int totalDays = attendanceSnapshot.docs.length;
+        int presentDays = 0;
+
         attendanceMap = attendanceSnapshot.docs.fold({}, (map, doc) {
           final data = doc.data();
           final Timestamp? timestamp = data['date'];
@@ -54,13 +59,20 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
             print(
                 "Attendance record for date: $normalizedDate, present: $present");
             map[normalizedDate] = present;
+            if (present) presentDays++;
           }
           return map;
         });
-      });
 
-      // Debugging info
-      print("AttendanceMap: $attendanceMap");
+        // Calculate attendance percentage
+        if (totalDays > 0) {
+          attendancePercentage = (presentDays / totalDays);
+        }
+
+        // Debugging info
+        print("AttendanceMap: $attendanceMap");
+        print("Attendance Percentage: ${(attendancePercentage * 100).toStringAsFixed(2)}%");
+      });
     } catch (e) {
       Fluttertoast.showToast(msg: "Failed to fetch attendance records: $e");
     }
@@ -91,6 +103,34 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
                     SizedBox(height: 10),
                     Text("Role: ${widget.employee['user_role']}"),
                   ],
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Display Attendance Percentage with Animation
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: attendancePercentage),
+                  duration: const Duration(seconds: 2), // Animation duration
+                  builder: (context, value, child) {
+                    return CircularPercentIndicator(
+                      radius: 100.0,
+                      lineWidth: 12.0,
+                      animation: false, // Disable built-in animation
+                      percent: value, // Animate this value
+                      center: Text(
+                        "${(value * 100).toStringAsFixed(2)}%",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20.0,
+                        ),
+                      ),
+                      circularStrokeCap: CircularStrokeCap.round,
+                      progressColor: Colors.green,
+                      backgroundColor: Colors.grey.shade300,
+                    );
+                  },
                 ),
               ),
               SizedBox(height: 20),
