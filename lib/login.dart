@@ -33,6 +33,7 @@ class _LoginState extends State<Login> {
 
   bool isloading = false;
   bool isCompanyLoading = true;
+  bool _obscurePassword = true;
 
   String? selectedCompany;
   List<String> companyList = [];
@@ -278,11 +279,12 @@ class _LoginState extends State<Login> {
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(right: screenWidth / 15),
+              padding: EdgeInsets.only(right: screenWidth / 10),
               child: TextFormField(
                 controller: controller,
-                enableSuggestions: false,
+                enableSuggestions: true,
                 autocorrect: false,
+                keyboardType: obscure ? TextInputType.text : TextInputType.emailAddress,
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
                     vertical: screenHeight / 60,
@@ -299,7 +301,7 @@ class _LoginState extends State<Login> {
       ),
     );
   }
-  Widget customFielde(String hint , TextEditingController controller,bool obscure){
+  Widget customFielde(String hint, TextEditingController controller, bool obscure) {
     return Container(
       width: screenWidth,
       margin: EdgeInsets.only(bottom: 12),
@@ -310,7 +312,7 @@ class _LoginState extends State<Login> {
           BoxShadow(
             color: Colors.black26,
             blurRadius: 10,
-            offset: Offset(2,2),
+            offset: Offset(2, 2),
           ),
         ],
       ),
@@ -325,27 +327,42 @@ class _LoginState extends State<Login> {
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(right: screenWidth / 15),
+              padding: EdgeInsets.only(right: screenWidth / 50),
               child: TextFormField(
                 controller: controller,
                 enableSuggestions: false,
                 autocorrect: false,
+                obscureText: obscure ? _obscurePassword : false,
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
                     vertical: screenHeight / 60,
                   ),
                   border: InputBorder.none,
                   hintText: hint,
+                  suffixIcon: obscure
+                      ? IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  )
+                      : null,
                 ),
                 maxLines: 1,
-                obscureText: obscure,
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
+
 
   Widget companyDropdown() {
     return Container(

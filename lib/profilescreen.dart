@@ -52,7 +52,7 @@ class _ProfilescreenState extends State<Profilescreen> {
     final userDoc = await userDocRef.get();
 
     final username = userDoc.data()?['first_name'];
-    final imageUrl = userDoc.data()?['image_url'];
+    final imageUrl = userDoc.data()?['image_urls'] as List<dynamic>?;
     final firstName = userDoc.data()?['first_name'];
     final lastName = userDoc.data()?['last_name'];
     final emailId = userDoc.data()?['email'];
@@ -60,7 +60,9 @@ class _ProfilescreenState extends State<Profilescreen> {
     //print('Welcome me , $username');
     setState(() {
       _username = username ?? ''; // Update _username here
-      _imageUrl = imageUrl ?? ''; // Update _imageUrl
+      _imageUrl = imageUrl != null && imageUrl.isNotEmpty
+          ?imageUrl[0] as String
+          : ''; // Update _imageUrl
       _firstName = firstName ?? '';
       _lastName = lastName ?? '';
       _emailId = emailId ?? '';
@@ -83,19 +85,22 @@ class _ProfilescreenState extends State<Profilescreen> {
               width: 120,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                //color: primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black54, width: 2),
+                image: _imageUrl.isNotEmpty
+                    ? DecorationImage(
+                  image: NetworkImage(_imageUrl),
+                  fit: BoxFit.cover,
+                )
+                    : null,
               ),
-              child: Center(
-                child: _imageUrl.isEmpty
-                    ? Icon(
-                        Icons.person,
-                        color: Colors.black54,
-                        size: 80,
-                      )
-                    : Image.network(
-                        _imageUrl), // Display the image from Firestore
-              ),
+              child: _imageUrl.isEmpty
+                  ? Icon(
+                Icons.person,
+                color: Colors.black54,
+                size: 80,
+              )
+                  : null, // Display the icon if there's no image
             ),
             Align(
               alignment: Alignment.center,

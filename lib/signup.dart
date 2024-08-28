@@ -33,32 +33,64 @@ class _SignupState extends State<Signup> {
 
   String _gender = '';
   final ImagePicker _picker = ImagePicker();
-  File? _image;
+  List<File> _images = [];
+  List<String?> _imageUrls = [];
 
   final firebase_storage.FirebaseStorage _storage = firebase_storage.FirebaseStorage.instance;
   String? _imageUrl;
 
   Future<void> captureImages() async {
+    if (_images.length >= 3) {
+      Fluttertoast.showToast(msg: "You have already captured 3 photos.");
+      return;
+    }
+
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image!= null) {
+    if (image != null) {
       setState(() {
-        _image = File(image.path);
+        _images.add(File(image.path));
       });
+
       // Process the image using Google ML Kit
       final inputImage = InputImage.fromFilePath(image.path);
       final faceDetector = GoogleMlKit.vision.faceDetector();
       final faces = await faceDetector.processImage(inputImage);
 
       if (faces.isNotEmpty) {
-        // Here you can get face bounding box or other details
-        final face = faces.first;
-        // You can upload the image to Firebase Storage or process the face data further
-        _uploadImageToFirebaseStorage();
+        // Optionally handle face detection
       } else {
+        // Remove the image from the list and show a message
+        setState(() {
+          _images.removeLast();
+        });
         Fluttertoast.showToast(msg: "No face detected. Please try again.");
       }
     }
   }
+
+
+
+  // Retake a photo at a given index
+  Future<void> _retakeImage(int index) async {
+    // Remove the old image
+    setState(() {
+      _images.removeAt(index);
+      _imageUrls.removeAt(index);
+    });
+
+    // Capture a new image
+    await captureImages();
+  }
+
+// Delete a photo at a given index
+  void _deleteImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+      _imageUrls.removeAt(index);
+    });
+  }
+
+
 
   @override
   void initState() {
@@ -89,19 +121,22 @@ class _SignupState extends State<Signup> {
     }
   }
 
-  Future<void> _uploadImageToFirebaseStorage() async {
-    if (_image == null) return;
+  Future<void> _uploadImagesToFirebaseStorage() async {
+    _imageUrls.clear();  // Clear previous URLs
     try {
-      final Reference ref = _storage.ref().child(
-          'images/${DateTime.now().toString()}.jpg');
-      final UploadTask uploadTask = ref.putFile(_image!);
-      final TaskSnapshot snapshot = await uploadTask;
-      // Get the image URL after upload
-      _imageUrl = await snapshot.ref.getDownloadURL();
+      for (File image in _images) {
+        final Reference ref = _storage.ref().child('images/${DateTime.now().toString()}.jpg');
+        final UploadTask uploadTask = ref.putFile(image);
+        final TaskSnapshot snapshot = await uploadTask;
+        final imageUrl = await snapshot.ref.getDownloadURL();
+        _imageUrls.add(imageUrl);
+      }
     } catch (e) {
-      _showError("Failed to upload image: $e");
+      _showError("Failed to upload images: $e");
     }
   }
+
+
 
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
@@ -126,46 +161,56 @@ class _SignupState extends State<Signup> {
     );
   }
 
-  Future<void> signup()async{
+  Future<void> signup() async {
     if (firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
         email.text.isEmpty ||
         mobileNumberController.text.isEmpty ||
         password.text.isEmpty ||
-        _image == null ) {
-      _showError('Please fill in all fields');
+        _images.isEmpty) {
+      _showError('Please fill in all fields and capture all required photos.');
       return;
     }
+
     try {
+      // Create the user in Firebase Auth
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: email.text, password: password.text);
+
+      // Hash the password for storing in Firestore
       final bytes = utf8.encode(password.text);
       final digest = sha256.convert(bytes);
       final hashedPassword = digest.toString();
 
-      // Upload image to Firebase Storage and get the download URL
-      await _uploadImageToFirebaseStorage();
-      // Get the selected company name
-      final companyName = selectedCompany;
+      // Upload images to Firebase Storage
+      await _uploadImagesToFirebaseStorage();
 
-      await _firestore
-          .collection('RegisteredCompany')
-          .doc(companyName)
-          .collection('users')
-          .doc(email.text)
-          .set({
-        'user_role':"Employee",
-        'first_name': firstNameController.text,
-        'last_name': lastNameController.text,
-        'email': email.text,
-        'mobile_number': mobileNumberController.text,
-        'password': hashedPassword,
-        'gender': _gender,
-        'image_url':_imageUrl,
-        'companyName': companyName,
-      });
-      Get.offAll(Wrapper());
-    }on FirebaseAuthException catch(e){
+      // Proceed with storing user data in Firestore if image upload was successful
+      if (_imageUrls.length == 3) {
+        final companyName = selectedCompany;
+
+        await _firestore
+            .collection('RegisteredCompany')
+            .doc(companyName)
+            .collection('users')
+            .doc(email.text)
+            .set({
+          'user_role': "Employee",
+          'first_name': firstNameController.text,
+          'last_name': lastNameController.text,
+          'email': email.text,
+          'mobile_number': mobileNumberController.text,
+          'password': hashedPassword,
+          'gender': _gender,
+          'image_urls': _imageUrls,
+          'companyName': companyName,
+        });
+
+        Get.offAll(Wrapper());
+      } else {
+        _showError("Failed to upload all images.");
+      }
+    } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         _showError('The password provided is too weak.');
       } else if (e.code == 'email-already-in-use') {
@@ -175,6 +220,8 @@ class _SignupState extends State<Signup> {
       _showError('An error occurred: ${e.toString()}');
     }
   }
+
+
 
 
   @override
@@ -190,28 +237,43 @@ class _SignupState extends State<Signup> {
           child: ListView(
             children: [
               Container(
-                alignment: Alignment.center,
+                alignment: Alignment.centerLeft,
                 margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-                child: Center(
-                  child: Column(
-                    crossAxisAlignment:CrossAxisAlignment.start ,
-                    children: [
-                      _image!= null
-                          ?CircleAvatar(
-                        radius: 60, // adjust the radius as needed
-                        backgroundImage: Image.file(_image!).image,
-                      )
-                          : Icon(Icons.image_rounded, size: 125),
-                      TextButton(onPressed: () {
-                        captureImages(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Captured Photos:", style: TextStyle(fontSize: screenWidth / 20)),
+                    if (_images.isEmpty)
+                      Text("No photos captured.")
+                    else
+                      ..._images.asMap().entries.map((entry) {
+                        int index = entry.key;
+                        File image = entry.value;
+                        return Row(
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(right: 10),
+                              child: Image.file(image, width: 60, height: 60),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.replay),
+                              onPressed: () => _retakeImage(index),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () => _deleteImage(index),
+                            ),
+                          ],
                         );
-                      },
-                          child: Text("Take your photo")
-                      ),
-                    ],
-                  ),
+                      }).toList(),
+                    ElevatedButton(
+                      onPressed: captureImages,
+                      child: Text("Capture three Photos"),
+                    ),
+                  ],
                 ),
               ),
+
               Container(
                 alignment: Alignment.centerLeft,
                 margin: EdgeInsets.symmetric(
