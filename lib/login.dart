@@ -282,8 +282,8 @@ class _LoginState extends State<Login> {
               padding: EdgeInsets.only(right: screenWidth / 10),
               child: TextFormField(
                 controller: controller,
-                enableSuggestions: true,
-                autocorrect: false,
+                enableSuggestions: false,
+                autocorrect: true,
                 keyboardType: obscure ? TextInputType.text : TextInputType.emailAddress,
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(

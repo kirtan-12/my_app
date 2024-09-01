@@ -4,7 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 class History extends StatefulWidget {
   final String companyName;
-  const History({required this.companyName,super.key});
+  const History({required this.companyName, super.key});
 
   @override
   State<History> createState() => _HistoryState();
@@ -25,7 +25,9 @@ class _HistoryState extends State<History> {
 
   Future<void> _fetchLeaveRequests() async {
     try {
-      final companyDocRef = FirebaseFirestore.instance.collection('RegisteredCompany').doc('${widget.companyName}');
+      final companyDocRef = FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .doc(widget.companyName);
       final snapshot = await companyDocRef.collection('leaveRequests').get();
       setState(() {
         _leaveRequests = snapshot.docs;
@@ -40,39 +42,42 @@ class _HistoryState extends State<History> {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          title: Text("History"),
-          backgroundColor: primary,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
-        body: SafeArea(
-          child: _leaveRequests.isEmpty
-              ? Center(child: Text('No leave requests found.'))
-              : ListView.builder(
-            itemCount: _leaveRequests.length,
-            itemBuilder: (context, index) {
-              final request = _leaveRequests[index];
-              final reason = request['reason'] ?? 'No reason provided';
-              final status = request['status'] ?? 'Unknown status';
-              final requesterEmail = request['requesterEmail'] ?? 'Unknown';
+        title: Text("History"),
+        backgroundColor: primary,
+      ),
+      body: SafeArea(
+        child: _leaveRequests.isEmpty
+            ? Center(child: Text('No leave requests found.'))
+            : ListView.builder(
+          itemCount: _leaveRequests.length,
+          itemBuilder: (context, index) {
+            final request = _leaveRequests[index];
+            final reason = request['reason'] ?? 'No reason provided';
+            final status = request['status'] ?? 'Unknown status';
+            final startDate = request['startDate'] ?? 'N/A';
+            final endDate = request['endDate'] ?? 'N/A';
+            final requesterEmail = request['requesterEmail'] ?? 'Unknown';
 
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: ListTile(
-                  title: Text('Leave Request'),
-                  subtitle: Text('Reason: $reason\nStatus: $status'),
-                  isThreeLine: true,
-                  contentPadding: EdgeInsets.all(10),
-                ),
-              );
-            },
-          ),
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: ListTile(
+                title: Text('Leave Request'),
+                subtitle: Text(
+                    'Reason: $reason\nStatus: $status\nStart Date: $startDate\nEnd Date: $endDate'),
+                isThreeLine: true,
+                contentPadding: EdgeInsets.all(10),
+              ),
+            );
+          },
         ),
+      ),
     );
   }
 }

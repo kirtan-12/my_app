@@ -14,6 +14,8 @@ class Leaverequest extends StatefulWidget {
 
 class _LeaverequestState extends State<Leaverequest> {
   final TextEditingController addressController = TextEditingController();
+  final TextEditingController startDateController = TextEditingController();
+  final TextEditingController endDateController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   double screenHeight = 0;
   double screenWidth = 0;
@@ -52,8 +54,28 @@ class _LeaverequestState extends State<Leaverequest> {
     }
   }
 
+  Future<void> _pickDate(BuildContext context, TextEditingController controller) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        controller.text = "${pickedDate.toLocal()}".split(' ')[0]; // Format date
+      });
+    }
+  }
+
   void submitLeaveRequest() async {
     if (_formKey.currentState?.validate() ?? false) {
+      if (startDateController.text.isEmpty || endDateController.text.isEmpty) {
+        Fluttertoast.showToast(msg: "Please select both start and end dates");
+        return;
+      }
+
       try {
         final user = FirebaseAuth.instance.currentUser;
         if (user == null) {
@@ -66,6 +88,8 @@ class _LeaverequestState extends State<Leaverequest> {
           'status': 'Pending',
           'requesterEmail': user.email,
           'requesterName': userName, // Full name is already set here
+          'startDate': startDateController.text,
+          'endDate': endDateController.text,
           'timestamp': Timestamp.now(),
         };
 
@@ -79,6 +103,8 @@ class _LeaverequestState extends State<Leaverequest> {
 
         // Clear the input after submission
         addressController.clear();
+        startDateController.clear();
+        endDateController.clear();
       } catch (e) {
         Fluttertoast.showToast(msg: "Failed to submit leave request: $e");
       }
@@ -90,76 +116,86 @@ class _LeaverequestState extends State<Leaverequest> {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          title: Text("Leave Request"),
-          backgroundColor: primary,
-          actions: [
-            Container(
-              width: 50,
-              height: 50,
-              child: IconButton(
-                icon: Icon(Icons.history, size: 30),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => History(companyName: widget.companyName,)),
-                  );
-                },
-              ),
-            ),
-          ],
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Container(
-                      alignment: Alignment.centerLeft,
-                      margin: EdgeInsets.symmetric(horizontal: screenWidth / 22),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          fieldTitle("Reason for leave"),
-                          customFieldi("Message", addressController, false),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Container(
-                    width: screenWidth,
+        title: Text("Leave Request"),
+        backgroundColor: primary,
+        actions: [
+          Container(
+            width: 50,
+            height: 50,
+            child: IconButton(
+              icon: Icon(Icons.history, size: 30),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => History(companyName: widget.companyName)),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Container(
+                    alignment: Alignment.centerLeft,
                     margin: EdgeInsets.symmetric(horizontal: screenWidth / 22),
-                    child: ElevatedButton(
-                      onPressed: submitLeaveRequest,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        fieldTitle("Reason for leave"),
+                        customFieldi("Message", addressController, false),
+                        SizedBox(height: 20),
+                        fieldTitle("Start Date"),
+                        customDateField("Select start date", startDateController, () {
+                          _pickDate(context, startDateController);
+                        }),
+                        SizedBox(height: 20),
+                        fieldTitle("End Date"),
+                        customDateField("Select end date", endDateController, () {
+                          _pickDate(context, endDateController);
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Container(
+                  width: screenWidth,
+                  margin: EdgeInsets.symmetric(horizontal: screenWidth / 22),
+                  child: ElevatedButton(
+                    onPressed: submitLeaveRequest,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        "Submit",
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+                    ),
+                    child: Text(
+                      "Submit",
+                      style: TextStyle(
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -218,6 +254,15 @@ class _LeaverequestState extends State<Leaverequest> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget customDateField(String hint, TextEditingController controller, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AbsorbPointer(
+        child: customFieldi(hint, controller, false),
       ),
     );
   }

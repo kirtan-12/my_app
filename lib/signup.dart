@@ -459,8 +459,9 @@ class _SignupState extends State<Signup> {
                           Expanded(
                             child: TextFormField(
                               controller: email,
-                              enableSuggestions: false,
+                              enableSuggestions: true,
                               autocorrect: false,
+                              keyboardType: false ? TextInputType.text : TextInputType.emailAddress,
                               decoration: InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(
                                     vertical: screenHeight / 70,

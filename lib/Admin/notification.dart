@@ -89,6 +89,8 @@ class _NotifyState extends State<Notify> {
             final requestId = request.id;
             final reason = request['reason'];
             final status = request['status'];
+            final startDate = request['startDate'];
+            final endDate = request['endDate'];
             final requesterEmail = request['requesterEmail'];
             final requesterName = request['requesterName'].toUpperCase();
 
@@ -99,7 +101,7 @@ class _NotifyState extends State<Notify> {
                     title: Text(
                       'Leave Request from \n$requesterName',
                     ),
-                    subtitle: Text('Email: $requesterEmail\nReason: $reason\nStatus: $status'),
+                    subtitle: Text('Email: $requesterEmail\nReason: $reason\nStatus: $status\nStartDate: $startDate\nEndDate: $endDate'),
                     onTap: () {
                       setState(() {
                         _isExpanded[index] = !_isExpanded[index];
