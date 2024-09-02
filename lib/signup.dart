@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:AttendEase/wrapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -14,8 +14,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:my_app/login.dart';
-import 'package:my_app/wrapper.dart';
 
 class Signup extends StatefulWidget {
   final String companyName;
@@ -460,7 +458,7 @@ class _SignupState extends State<Signup> {
                             child: TextFormField(
                               controller: email,
                               enableSuggestions: true,
-                              autocorrect: false,
+                              autocorrect: true,
                               keyboardType: false ? TextInputType.text : TextInputType.emailAddress,
                               decoration: InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(

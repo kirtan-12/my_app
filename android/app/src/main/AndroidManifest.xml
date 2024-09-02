@@ -10,7 +10,7 @@
 
 
     <application
-        android:label="my_app"
+        android:label="AttendEase"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

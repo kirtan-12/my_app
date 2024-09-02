@@ -1,9 +1,9 @@
+import 'package:AttendEase/Admin/notification.dart';
+import 'package:AttendEase/Admin/profilescreen.dart';
+import 'package:AttendEase/Admin/searchpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:my_app/Admin/notification.dart';
-import 'package:my_app/Admin/profilescreen.dart';
-import 'package:my_app/Admin/searchpage.dart';
 
 import '../login.dart';
 

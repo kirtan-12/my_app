@@ -1,5 +1,7 @@
 import 'dart:async';
-
+import 'package:AttendEase/leaverequestuser.dart';
+import 'package:AttendEase/login.dart';
+import 'package:AttendEase/model/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,9 +10,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
-import 'package:my_app/leaverequestuser.dart';
-import 'package:my_app/login.dart';
-import 'package:my_app/model/user.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 
 class Todayscreen extends StatefulWidget {
@@ -22,8 +21,10 @@ class Todayscreen extends StatefulWidget {
 }
 
 class _TodayscreenState extends State<Todayscreen> {
-  final TimeOfDay checkInStartTime = TimeOfDay(hour: 9, minute: 0);
-  final TimeOfDay checkOutEndTime = TimeOfDay(hour: 23, minute: 0);
+  // final TimeOfDay checkInStartTime = TimeOfDay(hour: 9, minute: 0);
+  // final TimeOfDay checkOutEndTime = TimeOfDay(hour: 23, minute: 0);
+  final DateTime designatedCheckInTime = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 9, 00); // 9:00 AM
+  final DateTime designatedCheckOutTime = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 18, 00); // 6:00 PM
 
   double screenHeight = 0;
   double screenWidth = 0;
@@ -70,8 +71,8 @@ class _TodayscreenState extends State<Todayscreen> {
     // Convert times to minutes since midnight
     int nowMinutes = now.hour * 60 + now.minute;
     int checkInStartMinutes =
-        checkInStartTime.hour * 60 + checkInStartTime.minute;
-    int checkOutEndMinutes = checkOutEndTime.hour * 60 + checkOutEndTime.minute;
+        designatedCheckInTime.hour * 60 + designatedCheckInTime.minute;
+    int checkOutEndMinutes = designatedCheckOutTime.hour * 60 + designatedCheckOutTime.minute;
 
     // Check if current time is within allowed range
     return nowMinutes >= checkInStartMinutes &&
@@ -325,7 +326,34 @@ class _TodayscreenState extends State<Todayscreen> {
             .update({
           'status': 'Present',
         });
-      } else {
+
+        // final checkInTime = TimeOfDay.now();
+        // final allowedCheckInTime = TimeOfDay(hour: 15, minute: 0); // 9:00 AM
+        // int thirtyMinutesAfterAllowedCheckInHour = allowedCheckInTime.hour;
+        // int thirtyMinutesAfterAllowedCheckInMin = allowedCheckInTime.minute + 30;
+        //
+        // if (thirtyMinutesAfterAllowedCheckInMin >= 60) {
+        //   thirtyMinutesAfterAllowedCheckInHour = (thirtyMinutesAfterAllowedCheckInHour + 1) % 24;
+        //   thirtyMinutesAfterAllowedCheckInMin -= 60;
+        // }
+        //
+        //
+        // if (checkInTime.hour > thirtyMinutesAfterAllowedCheckInHour ||
+        //     (checkInTime.hour == thirtyMinutesAfterAllowedCheckInHour &&
+        //         checkInTime.minute >= thirtyMinutesAfterAllowedCheckInMin)) {
+        //   // User checked in late, update the status
+        //   await FirebaseFirestore.instance
+        //       .collection("RegisteredCompany")
+        //       .doc('${widget.companyName}')
+        //       .collection("users")
+        //       .doc(FirebaseAuth.instance.currentUser!.email)
+        //       .collection("Record")
+        //       .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+        //       .update({
+        //     'status': 'Late Entry',
+        //   });
+        // }
+      }else {
         // Mark as absent
         await FirebaseFirestore.instance
             .collection("RegisteredCompany")
@@ -691,6 +719,9 @@ class _TodayscreenState extends State<Todayscreen> {
                                           .format(DateTime.now());
                                     });
 
+                                    final DateTime checkOutTime = DateTime.now();
+                                    bool isEarlyExit = checkOutTime.isBefore(designatedCheckOutTime);
+
                                     await FirebaseFirestore.instance
                                         .collection("RegisteredCompany")
                                         .doc('${widget.companyName}')
@@ -705,8 +736,11 @@ class _TodayscreenState extends State<Todayscreen> {
                                       'checkOut': DateFormat('hh:mm')
                                           .format(DateTime.now()),
                                       'checkOut_location': location,
+                                      if(isEarlyExit) 'early_exit' : 'Early Exit',
                                     });
                                   } catch (e) {
+                                    final DateTime checkInTime = DateTime.now();
+                                    bool isLateEntry = checkInTime.isAfter(designatedCheckInTime.add(Duration(minutes: 30)));
                                     setState(() {
                                       checkIn = DateFormat('hh:mm')
                                           .format(DateTime.now());
@@ -725,6 +759,7 @@ class _TodayscreenState extends State<Todayscreen> {
                                           .format(DateTime.now()),
                                       'checkIn_location': location,
                                       'checkOut': "--/--",
+                                      if(isLateEntry) 'late_entry' : 'Late Entry',
                                     });
                                   }
                                   key.currentState!.reset();
@@ -771,6 +806,9 @@ class _TodayscreenState extends State<Todayscreen> {
                                             .format(DateTime.now());
                                       });
 
+                                      final DateTime checkOutTime = DateTime.now();
+                                      bool isEarlyExit = checkOutTime.isBefore(designatedCheckOutTime);
+
                                       await FirebaseFirestore.instance
                                           .collection("RegisteredCompany")
                                           .doc('${widget.companyName}')
@@ -785,8 +823,12 @@ class _TodayscreenState extends State<Todayscreen> {
                                         'checkIn_location': location,
                                         'checkOut': DateFormat('hh:mm')
                                             .format(DateTime.now()),
+                                        if (isEarlyExit) 'early_exit': 'Early Exit',
+
                                       });
                                     } catch (e) {
+                                      final DateTime checkInTime = DateTime.now();
+                                      bool isLateEntry = checkInTime.isAfter(designatedCheckInTime.add(Duration(minutes: 30)));
                                       setState(() {
                                         checkIn = DateFormat('hh:mm')
                                             .format(DateTime.now());
@@ -805,6 +847,7 @@ class _TodayscreenState extends State<Todayscreen> {
                                             .format(DateTime.now()),
                                         'checkOut': "--/--",
                                         'checkOut_location': location,
+                                        if (isLateEntry) 'late_entry': 'Late Entry',
                                       });
                                     }
                                     key.currentState!.reset();

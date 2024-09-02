@@ -1,19 +1,19 @@
+import 'package:AttendEase/Admin/employeedetailpage.dart';
+import 'package:AttendEase/login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:my_app/Admin/employeedetailpage.dart';
-import 'package:my_app/login.dart';
 
 class Searchpage extends StatefulWidget {
   final String companyName;
   const Searchpage({required this.companyName, super.key});
 
   @override
-  State<Searchpage> createState() => _MyState();
+  State<Searchpage> createState() => _SearchpageState();
 }
 
-class _MyState extends State<Searchpage> {
+class _SearchpageState extends State<Searchpage> {
   double screenHeight = 0;
   double screenWidth = 0;
 
@@ -43,7 +43,7 @@ class _MyState extends State<Searchpage> {
       final userEmail = user?.email;
       final companyDocRef = FirebaseFirestore.instance
           .collection('RegisteredCompany')
-          .doc('${widget.companyName}');
+          .doc(widget.companyName);
 
       final userDocRef = companyDocRef.collection('users').doc(userEmail);
       final userDoc = await userDocRef.get();
@@ -78,7 +78,7 @@ class _MyState extends State<Searchpage> {
             .map((doc) => doc.data() as Map<String, dynamic>)
             .toList();
         filteredEmployees = employees;
-        print("Employee fetched: ${employees.length}");
+        print("Employees fetched: ${employees.length}");
       });
     } catch (e) {
       Fluttertoast.showToast(msg: "Failed to fetch employees: $e");
@@ -119,7 +119,10 @@ class _MyState extends State<Searchpage> {
               employee: employeeData!,
             ),
           ),
-        );
+        ).then((_) {
+          // Fetch employees again to update the list if necessary
+          _fetchEmployees();
+        });
       } else {
         Fluttertoast.showToast(msg: "Employee data not found");
       }
@@ -128,7 +131,7 @@ class _MyState extends State<Searchpage> {
     }
   }
 
-  signout() async {
+  Future<void> signout() async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushAndRemoveUntil(
       context,
@@ -145,7 +148,7 @@ class _MyState extends State<Searchpage> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(right: 20,left: 20),
+            padding: const EdgeInsets.only(right: 20, left: 20),
             child: Column(
               children: [
                 Container(
@@ -175,7 +178,7 @@ class _MyState extends State<Searchpage> {
                     child: Column(
                       children: [
                         Container(
-                          margin: EdgeInsets.only(top: 20,bottom: 20),
+                          margin: EdgeInsets.only(top: 20, bottom: 20),
                           padding: EdgeInsets.all(5),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],

@@ -1,7 +1,7 @@
+import 'package:AttendEase/wrapper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:my_app/wrapper.dart';
 
 class Verify extends StatefulWidget {
   const Verify({super.key});

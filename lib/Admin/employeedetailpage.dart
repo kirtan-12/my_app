@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:percent_indicator/percent_indicator.dart'; // Import percent indicator package
@@ -78,11 +80,62 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
     }
   }
 
+  Future<void> _deleteUser() async {
+    try {
+      final employeeEmail = widget.employee['email'];
+      final companyDocRef = FirebaseFirestore.instance
+          .collection('RegisteredCompany')
+          .doc(widget.companyName);
+
+      // Delete the user document and their attendance records
+      await companyDocRef.collection('users').doc(employeeEmail).delete();
+
+      Fluttertoast.showToast(msg: "User deleted successfully");
+      Navigator.pop(context,true); // Go back to the previous screen
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to delete user's: $e");
+    }
+  }
+
+
+  Future<void> _showDeleteConfirmationDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete User'),
+          content: const Text('Are you sure you want to delete this user? This action cannot be undone.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                _deleteUser(); // Trigger user deletion
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Details"),
+        title: const Text("Details"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _showDeleteConfirmationDialog, // Show delete confirmation dialog
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -96,16 +149,16 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
                   children: [
                     Text(
                       "Name: ${widget.employee['first_name']} ${widget.employee['last_name']}",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text("Email: ${widget.employee['email']}"),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text("Role: ${widget.employee['user_role']}"),
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Display Attendance Percentage with Animation
               Padding(
@@ -121,7 +174,7 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
                       percent: value, // Animate this value
                       center: Text(
                         "${(value * 100).toStringAsFixed(2)}%",
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 20.0,
                         ),
@@ -133,7 +186,7 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
                   },
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Calendar Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -171,28 +224,28 @@ class _EmployeeDetailsPageState extends State<EmployeeDetailsPage> {
                           child: Center(
                             child: Text(
                               '${day.day}',
-                              style: TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
                         );
                       } else {
                         // No record day (White)
                         return Container(
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               '${day.day}',
-                              style: TextStyle(color: Colors.black),
+                              style: const TextStyle(color: Colors.black),
                             ),
                           ),
                         );
                       }
                     },
                   ),
-                  calendarStyle: CalendarStyle(
+                  calendarStyle: const CalendarStyle(
                     defaultDecoration: BoxDecoration(
                       color: Colors.transparent, // Ensure transparency
                     ),

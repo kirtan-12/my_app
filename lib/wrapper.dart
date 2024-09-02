@@ -1,11 +1,9 @@
 
+import 'package:AttendEase/login.dart';
+import 'package:AttendEase/verifyemail.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/homepage.dart';
-import 'package:my_app/login.dart';
-import 'package:my_app/verifyemail.dart';
-
 
 class Wrapper extends StatefulWidget {
   const Wrapper({super.key});

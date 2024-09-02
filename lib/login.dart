@@ -1,12 +1,12 @@
+import 'package:AttendEase/forgot.dart';
+import 'package:AttendEase/homepage.dart';
+import 'package:AttendEase/registercompany.dart';
+import 'package:AttendEase/signup.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
-import 'package:my_app/forgot.dart';
-import 'package:my_app/homepage.dart';
-import 'package:my_app/registercompany.dart';
-import 'package:my_app/signup.dart';
 
 import 'Admin/adminhomepage.dart';
 
