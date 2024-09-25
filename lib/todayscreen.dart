@@ -1,14 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:AttendEase/leaverequestuser.dart';
 import 'package:AttendEase/login.dart';
 import 'package:AttendEase/model/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 
@@ -23,8 +27,10 @@ class Todayscreen extends StatefulWidget {
 class _TodayscreenState extends State<Todayscreen> {
   // final TimeOfDay checkInStartTime = TimeOfDay(hour: 9, minute: 0);
   // final TimeOfDay checkOutEndTime = TimeOfDay(hour: 23, minute: 0);
-  final DateTime designatedCheckInTime = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 9, 00); // 9:00 AM
-  final DateTime designatedCheckOutTime = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 18, 00); // 6:00 PM
+  final DateTime designatedCheckInTime = DateTime(DateTime.now().year,
+      DateTime.now().month, DateTime.now().day, 9, 00); // 9:00 AM
+  final DateTime designatedCheckOutTime = DateTime(DateTime.now().year,
+      DateTime.now().month, DateTime.now().day, 23, 30); // 6:00 PM
 
   double screenHeight = 0;
   double screenWidth = 0;
@@ -72,7 +78,8 @@ class _TodayscreenState extends State<Todayscreen> {
     int nowMinutes = now.hour * 60 + now.minute;
     int checkInStartMinutes =
         designatedCheckInTime.hour * 60 + designatedCheckInTime.minute;
-    int checkOutEndMinutes = designatedCheckOutTime.hour * 60 + designatedCheckOutTime.minute;
+    int checkOutEndMinutes =
+        designatedCheckOutTime.hour * 60 + designatedCheckOutTime.minute;
 
     // Check if current time is within allowed range
     return nowMinutes >= checkInStartMinutes &&
@@ -353,7 +360,7 @@ class _TodayscreenState extends State<Todayscreen> {
         //     'status': 'Late Entry',
         //   });
         // }
-      }else {
+      } else {
         // Mark as absent
         await FirebaseFirestore.instance
             .collection("RegisteredCompany")
@@ -497,6 +504,20 @@ class _TodayscreenState extends State<Todayscreen> {
     }
   }
 
+  Future<String> _uploadImage(String imagePath) async {
+    File file = File(imagePath);
+    String fileName = 'attendance_images/${FirebaseAuth.instance.currentUser!.email}/${DateTime.now().millisecondsSinceEpoch}.png';
+
+    try {
+      await FirebaseStorage.instance.ref(fileName).putFile(file);
+      String downloadUrl = await FirebaseStorage.instance.ref(fileName).getDownloadURL();
+      return downloadUrl; // Return the download URL
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Error uploading image: $e");
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
@@ -506,417 +527,339 @@ class _TodayscreenState extends State<Todayscreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(left: 20, right: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                Container(
-                  alignment: Alignment.centerLeft,
-                  margin: const EdgeInsets.only(top: 10),
-                  child: Text(
-                    "Welcome",
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: screenWidth / 20,
-                    ),
-                  ),
-                ),
-                Container(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Employee, $_username",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: screenWidth / 15,
-                    ),
-                  ),
-                ),
-                Container(
-                  alignment: Alignment.centerLeft,
-                  margin: const EdgeInsets.only(top: 30),
-                  child: Text(
-                    "Today's Status",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: screenWidth / 15,
-                    ),
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 32),
-                  height: 150,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Check In",
-                              style: TextStyle(
-                                fontSize: screenWidth / 20,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            Text(
-                              checkIn,
-                              style: TextStyle(
-                                fontSize: screenWidth / 20,
-                                color: Colors.black,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Check Out",
-                              style: TextStyle(
-                                fontSize: screenWidth / 20,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            Text(
-                              checkOut,
-                              style: TextStyle(
-                                fontSize: screenWidth / 20,
-                                color: Colors.black,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                    alignment: Alignment.centerLeft,
-                    child: RichText(
-                      text: TextSpan(
-                        text: DateTime.now().day.toString(),
-                        style: TextStyle(
-                          color: primary,
-                          fontSize: screenWidth / 20,
-                        ),
-                        children: [
-                          TextSpan(
-                              text: DateFormat(' MMMM yyyy')
-                                  .format(DateTime.now()),
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth / 20,
-                              ))
-                        ],
-                      ),
-                    )),
-                StreamBuilder(
-                    stream: Stream.periodic(const Duration(seconds: 1)),
-                    builder: (context, snapshot) {
-                      return Container(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          DateFormat('hh:mm:ss a').format(DateTime.now()),
-                          style: TextStyle(
-                            fontSize: screenWidth / 20,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      );
-                    }),
-                checkOut == "--/--"
-                    ? Container(
-                        margin: const EdgeInsets.only(top: 24, bottom: 12),
-                        child: Builder(builder: (context) {
-                          final GlobalKey<SlideActionState> key = GlobalKey();
-
-                          return SlideAction(
-                            text: checkIn == "--/--"
-                                ? "Slide to Check In"
-                                : "Slide to Check Out",
-                            textStyle: TextStyle(
-                              color: Colors.black54,
-                              fontSize: screenWidth / 20,
-                            ),
-                            outerColor: Colors.white,
-                            innerColor: primary,
-                            key: key,
-                            onSubmit: () async {
-                              // Check if it's a weekend
-                              // if (_isWeekend()) {
-                              //   Fluttertoast.showToast(
-                              //     msg: "Check-in and Check-out are not allowed on weekends.",
-                              //   );
-                              //   key.currentState?.reset();
-                              //   return;
-                              // }
-
-                              if (!_isWithinAllowedTime()) {
-                                Fluttertoast.showToast(
-                                    msg:
-                                        "Check-in and Check-out are allowed only between 9:00 AM and 6:00 PM.");
-                                key.currentState?.reset();
-                                return;
-                              }
-
-                              if (!(await Geolocator
-                                  .isLocationServiceEnabled())) {
-                                Fluttertoast.showToast(
-                                    msg: "Please enable location services");
-                                return;
-                              }
-
-                              if (Users.lat != 0) {
-                                _getLocation();
-
-                                final user = FirebaseAuth.instance.currentUser;
-                                final userEmail = user?.email;
-
-                                QuerySnapshot snap = await FirebaseFirestore
-                                    .instance
-                                    .collection("RegisteredCompany")
-                                    .doc('${widget.companyName}')
-                                    .collection("users")
-                                    .where('email', isEqualTo: userEmail)
-                                    .get();
-
-                                if (snap.docs.isNotEmpty) {
-                                  String email =
-                                      snap.docs[0].get('email') ?? '';
-
-                                  DocumentSnapshot snap2 =
-                                      await FirebaseFirestore.instance
-                                          .collection("RegisteredCompany")
-                                          .doc('${widget.companyName}')
-                                          .collection("users")
-                                          .doc(snap.docs[0].get('email'))
-                                          .collection("Record")
-                                          .doc(DateFormat('dd MMMM yyyy')
-                                              .format(DateTime.now()))
-                                          .get();
-
-                                  try {
-                                    String checkIn = snap2['checkIn'];
-
-                                    setState(() {
-                                      checkOut = DateFormat('hh:mm')
-                                          .format(DateTime.now());
-                                    });
-
-                                    final DateTime checkOutTime = DateTime.now();
-                                    bool isEarlyExit = checkOutTime.isBefore(designatedCheckOutTime);
-
-                                    await FirebaseFirestore.instance
-                                        .collection("RegisteredCompany")
-                                        .doc('${widget.companyName}')
-                                        .collection("users")
-                                        .doc(snap.docs[0].get('email'))
-                                        .collection("Record")
-                                        .doc(DateFormat('dd MMMM yyyy')
-                                            .format(DateTime.now()))
-                                        .update({
-                                      'date': Timestamp.now(),
-                                      'checkIn': checkIn,
-                                      'checkOut': DateFormat('hh:mm')
-                                          .format(DateTime.now()),
-                                      'checkOut_location': location,
-                                      if(isEarlyExit) 'early_exit' : 'Early Exit',
-                                    });
-                                  } catch (e) {
-                                    final DateTime checkInTime = DateTime.now();
-                                    bool isLateEntry = checkInTime.isAfter(designatedCheckInTime.add(Duration(minutes: 30)));
-                                    setState(() {
-                                      checkIn = DateFormat('hh:mm')
-                                          .format(DateTime.now());
-                                    });
-                                    await FirebaseFirestore.instance
-                                        .collection("RegisteredCompany")
-                                        .doc('${widget.companyName}')
-                                        .collection("users")
-                                        .doc(snap.docs[0].get('email'))
-                                        .collection("Record")
-                                        .doc(DateFormat('dd MMMM yyyy')
-                                            .format(DateTime.now()))
-                                        .set({
-                                      'date': Timestamp.now(),
-                                      'checkIn': DateFormat('hh:mm')
-                                          .format(DateTime.now()),
-                                      'checkIn_location': location,
-                                      'checkOut': "--/--",
-                                      if(isLateEntry) 'late_entry' : 'Late Entry',
-                                    });
-                                  }
-                                  key.currentState!.reset();
-                                } else {
-                                  Fluttertoast.showToast(msg: "User not found");
-                                }
-                              } else {
-                                Timer(const Duration(seconds: 3), () async {
-                                  _getLocation();
-
-                                  final user =
-                                      FirebaseAuth.instance.currentUser;
-                                  final userEmail = user?.email;
-
-                                  QuerySnapshot snap = await FirebaseFirestore
-                                      .instance
-                                      .collection("RegisteredCompany")
-                                      .doc('${widget.companyName}')
-                                      .collection("users")
-                                      .where('email', isEqualTo: userEmail)
-                                      .get();
-
-                                  if (snap.docs.isNotEmpty) {
-                                    String email =
-                                        snap.docs[0].get('email') ?? '';
-
-                                    DocumentSnapshot snap2 =
-                                        await FirebaseFirestore
-                                            .instance
-                                            .collection("RegisteredCompany")
-                                            .doc('${widget.companyName}')
-                                            .collection("users")
-                                            .doc(snap.docs[0].get('email'))
-                                            .collection("Record")
-                                            .doc(DateFormat('dd MMMM yyyy')
-                                                .format(DateTime.now()))
-                                            .get();
-
-                                    try {
-                                      String checkIn = snap2['checkIn'];
-
-                                      setState(() {
-                                        checkOut = DateFormat('hh:mm')
-                                            .format(DateTime.now());
-                                      });
-
-                                      final DateTime checkOutTime = DateTime.now();
-                                      bool isEarlyExit = checkOutTime.isBefore(designatedCheckOutTime);
-
-                                      await FirebaseFirestore.instance
-                                          .collection("RegisteredCompany")
-                                          .doc('${widget.companyName}')
-                                          .collection("users")
-                                          .doc(snap.docs[0].get('email'))
-                                          .collection("Record")
-                                          .doc(DateFormat('dd MMMM yyyy')
-                                              .format(DateTime.now()))
-                                          .update({
-                                        'date': Timestamp.now(),
-                                        'checkIn': checkIn,
-                                        'checkIn_location': location,
-                                        'checkOut': DateFormat('hh:mm')
-                                            .format(DateTime.now()),
-                                        if (isEarlyExit) 'early_exit': 'Early Exit',
-
-                                      });
-                                    } catch (e) {
-                                      final DateTime checkInTime = DateTime.now();
-                                      bool isLateEntry = checkInTime.isAfter(designatedCheckInTime.add(Duration(minutes: 30)));
-                                      setState(() {
-                                        checkIn = DateFormat('hh:mm')
-                                            .format(DateTime.now());
-                                      });
-                                      await FirebaseFirestore.instance
-                                          .collection("RegisteredCompany")
-                                          .doc('${widget.companyName}')
-                                          .collection("users")
-                                          .doc(snap.docs[0].get('email'))
-                                          .collection("Record")
-                                          .doc(DateFormat('dd MMMM yyyy')
-                                              .format(DateTime.now()))
-                                          .set({
-                                        'date': Timestamp.now(),
-                                        'checkIn': DateFormat('hh:mm')
-                                            .format(DateTime.now()),
-                                        'checkOut': "--/--",
-                                        'checkOut_location': location,
-                                        if (isLateEntry) 'late_entry': 'Late Entry',
-                                      });
-                                    }
-                                    key.currentState!.reset();
-                                  } else {
-                                    Fluttertoast.showToast(
-                                        msg: "User not found");
-                                  }
-                                });
-                              }
-                            },
-                          );
-                        }),
-                      )
-                    : Container(
-                        margin: const EdgeInsets.only(top: 32, bottom: 32),
-                        child: Text(
-                          _isWithinAllowedTime()
-                              ? "You have Completed this day!"
-                              : "Check-in and Check-out are allowed only between 9:00 AM and 6:00 PM.",
-                          style: TextStyle(
-                            fontSize: screenWidth / 20,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ),
-                location != " "
-                    ? Text(
-                        "Location: " + location,
-                      )
-                    : const SizedBox(),
-                Container(
-                  padding: EdgeInsets.only(top: 150),
-                  alignment: Alignment.centerRight,
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => Leaverequest(
-                                  companyName: widget.companyName,
-                                )),
-                      );
-                    },
-                    backgroundColor: Color(0xFFE57373),
-                    child: Icon(
-                      Icons.message,
-                      size: 30.0,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
+                _buildWelcomeText(),
+                _buildStatusHeader(),
+                _buildStatusCard(),
+                _buildDateDisplay(),
+                _buildTimeDisplay(),
+                _buildSlideAction(),
+                _buildLocationDisplay(),
+                _buildLeaveRequestButton(),
               ],
             ),
           ),
-          Positioned(
-            top: 15,
-            right: 10,
-            child: FloatingActionButton(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              mini: true,
-              onPressed: (() => signout()),
-              child: Icon(
-                Icons.login_rounded,
-                size: 30,
-              ),
-            ),
+          _buildSignOutButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeText() {
+    return Container(
+      alignment: Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          Text(
+            "Welcome",
+            style: TextStyle(color: Colors.black54, fontSize: screenWidth / 20),
+          ),
+          Text(
+            "Employee, $_username",
+            style: TextStyle(color: Colors.black, fontSize: screenWidth / 15),
           ),
         ],
+      ),
+    );
+  }
+
+
+  Widget _buildStatusHeader() {
+    return Container(
+      alignment: Alignment.centerLeft,
+      margin: const EdgeInsets.only(top: 30),
+      child: Text(
+        "Today's Status",
+        style: TextStyle(color: Colors.black, fontSize: screenWidth / 15),
+      ),
+    );
+  }
+
+  Widget _buildStatusCard() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12, bottom: 32),
+      height: 150,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(2, 2),
+          ),
+        ],
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildCheckInColumn(),
+          _buildCheckOutColumn(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheckInColumn() {
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text("Check In",
+              style:
+                  TextStyle(fontSize: screenWidth / 20, color: Colors.black54)),
+          Text(checkIn,
+              style:
+                  TextStyle(fontSize: screenWidth / 20, color: Colors.black)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheckOutColumn() {
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text("Check Out",
+              style:
+                  TextStyle(fontSize: screenWidth / 20, color: Colors.black54)),
+          Text(checkOut,
+              style:
+                  TextStyle(fontSize: screenWidth / 20, color: Colors.black)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateDisplay() {
+    return Container(
+      alignment: Alignment.centerLeft,
+      child: RichText(
+        text: TextSpan(
+          text: DateTime.now().day.toString(),
+          style: TextStyle(color: primary, fontSize: screenWidth / 20),
+          children: [
+            TextSpan(
+              text: DateFormat(' MMMM yyyy').format(DateTime.now()),
+              style: TextStyle(color: Colors.black, fontSize: screenWidth / 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeDisplay() {
+    return StreamBuilder(
+      stream: Stream.periodic(const Duration(seconds: 1)),
+      builder: (context, snapshot) {
+        return Container(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            DateFormat('hh:mm:ss a').format(DateTime.now()),
+            style: TextStyle(fontSize: screenWidth / 20, color: Colors.black54),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSlideAction() {
+    return checkOut == "--/--"
+        ? Container(
+            margin: const EdgeInsets.only(top: 24, bottom: 12),
+            child: Builder(
+              builder: (context) {
+                final GlobalKey<SlideActionState> key = GlobalKey();
+                return SlideAction(
+                  text: checkIn == "--/--"
+                      ? "Slide to Check In"
+                      : "Slide to Check Out",
+                  textStyle: TextStyle(
+                      color: Colors.black54, fontSize: screenWidth / 20),
+                  outerColor: Colors.white,
+                  innerColor: primary,
+                  key: key,
+                  onSubmit: () async {
+                    await _handleSlideAction(key);
+                  },
+                );
+              },
+            ),
+          )
+        : Container(
+            margin: const EdgeInsets.only(top: 32, bottom: 32),
+            child: Text(
+              _isWithinAllowedTime()
+                  ? "You have Completed this day!"
+                  : "Check-in and Check-out are allowed only between 9:00 AM and 6:00 PM.",
+              style:
+                  TextStyle(fontSize: screenWidth / 20, color: Colors.black54),
+            ),
+          );
+  }
+
+  Future<void> _handleSlideAction(GlobalKey<SlideActionState> key) async {
+    // Check if it's a weekend (uncomment when ready)
+    // if (_isWeekend()) {
+    //   Fluttertoast.showToast(msg: "Check-in and Check-out are not allowed on weekends.");
+    //   key.currentState?.reset();
+    //   return;
+    // }
+
+    if (!_isWithinAllowedTime()) {
+      Fluttertoast.showToast(
+          msg:
+              "Check-in and Check-out are allowed only between 9:00 AM and 6:00 PM.");
+      key.currentState?.reset();
+      return;
+    }
+
+    if (!(await Geolocator.isLocationServiceEnabled())) {
+      Fluttertoast.showToast(msg: "Please enable location services");
+      return;
+    }
+
+    // Capture the photo
+    final ImagePicker _picker = ImagePicker();
+
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+
+    if (photo != null) {
+      String imageUrl = await _uploadImage(photo.path); // Upload the image to Firestore
+
+      // Check location and handle check-in/check-out
+      if (Users.lat != 0) {
+        _getLocation();
+        await _updateCheckInOut(key, imageUrl);
+      } else {
+        Timer(const Duration(seconds: 3), () async {
+          _getLocation();
+          await _updateCheckInOut(key, imageUrl);
+        });
+      }
+    } else {
+      Fluttertoast.showToast(msg: "Photo capture failed");
+    }
+  }
+
+
+
+  Future<void> _updateCheckInOut(GlobalKey<SlideActionState> key, String imageUrl) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final userEmail = user?.email;
+
+
+    QuerySnapshot snap = await FirebaseFirestore.instance
+        .collection("RegisteredCompany")
+        .doc(widget.companyName)
+        .collection("users")
+        .where('email', isEqualTo: userEmail)
+        .get();
+
+    if (snap.docs.isNotEmpty) {
+      String email = snap.docs[0].get('email') ?? '';
+      DocumentSnapshot snap2 = await FirebaseFirestore.instance
+          .collection("RegisteredCompany")
+          .doc(widget.companyName)
+          .collection("users")
+          .doc(email)
+          .collection("Record")
+          .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+          .get();
+
+      try {
+        String checkIn = snap2['checkIn'];
+        setState(() {
+          checkOut = DateFormat('hh:mm').format(DateTime.now());
+        });
+
+        final DateTime checkOutTime = DateTime.now();
+        bool isEarlyExit = checkOutTime.isBefore(designatedCheckOutTime);
+
+        await FirebaseFirestore.instance
+            .collection("RegisteredCompany")
+            .doc(widget.companyName)
+            .collection("users")
+            .doc(email)
+            .collection("Record")
+            .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+            .update({
+          'date': Timestamp.now(),
+          'checkIn': checkIn,
+          'checkOut': DateFormat('hh:mm').format(DateTime.now()),
+          'checkOut_location': location,
+          'Out_photoUrl': imageUrl, // Add the photo URL here
+          if (isEarlyExit) 'early_exit': 'Early Exit',
+        });
+      } catch (e) {
+        final DateTime checkInTime = DateTime.now();
+        bool isLateEntry = checkInTime
+            .isAfter(designatedCheckInTime.add(Duration(minutes: 30)));
+        setState(() {
+          checkIn = DateFormat('hh:mm').format(DateTime.now());
+        });
+
+        await FirebaseFirestore.instance
+            .collection("RegisteredCompany")
+            .doc(widget.companyName)
+            .collection("users")
+            .doc(email)
+            .collection("Record")
+            .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+            .set({
+          'date': Timestamp.now(),
+          'checkIn': DateFormat('hh:mm').format(DateTime.now()),
+          'checkOut': "--/--",
+          'checkIn_location': location,
+          'In_photoUrl': imageUrl, // Add the photo URL here
+          if (isLateEntry) 'late_entry': 'Late Entry',
+        });
+      }
+      key.currentState!.reset();
+    } else {
+      Fluttertoast.showToast(msg: "User not found");
+    }
+  }
+
+  Widget _buildLocationDisplay() {
+    return location != " " ? Text("Location: " + location) : const SizedBox();
+  }
+
+  Widget _buildLeaveRequestButton() {
+    return Container(
+      padding: EdgeInsets.only(top: 150),
+      alignment: Alignment.centerRight,
+      child: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    Leaverequest(companyName: widget.companyName)),
+          );
+        },
+        backgroundColor: Color(0xFFE57373),
+        child: Icon(Icons.message, size: 30.0, color: Colors.black),
+      ),
+    );
+  }
+
+  Widget _buildSignOutButton() {
+    return Positioned(
+      top: 15,
+      right: 10,
+      child: FloatingActionButton(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        mini: true,
+        onPressed: signout,
+        child: Icon(Icons.login_rounded, size: 30),
       ),
     );
   }

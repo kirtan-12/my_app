@@ -102,8 +102,8 @@ class _CalendarscreenState extends State<Calendarscreen>
                     final month = await showMonthYearPicker(
                       context: context,
                       initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2099),
+                      firstDate: DateTime(2024),
+                      lastDate: DateTime(2050),
                       builder: (context, child) {
                         return Theme(
                           data: ThemeData(
@@ -164,8 +164,7 @@ class _CalendarscreenState extends State<Calendarscreen>
                   .collection("users")
                   .doc(userEmail)
                   .collection("Record")
-                  .where('status', whereIn: ['Present', 'Absent'])
-                  .snapshots(),
+                  .where('status', whereIn: ['Present', 'Absent']).snapshots(),
               builder: (BuildContext context,
                   AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
@@ -216,8 +215,7 @@ class _CalendarscreenState extends State<Calendarscreen>
                                   ),
                                   child: Center(
                                     child: Text(
-                                      DateFormat('EE \n dd')
-                                          .format(recordDate),
+                                      DateFormat('EE \n dd').format(recordDate),
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: screenWidth / 20,

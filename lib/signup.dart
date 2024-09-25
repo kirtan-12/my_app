@@ -63,6 +63,8 @@ class _SignupState extends State<Signup> {
         });
         Fluttertoast.showToast(msg: "No face detected. Please try again.");
       }
+      // Optionally, close the face detector after processing
+      faceDetector.close();
     }
   }
 
@@ -97,6 +99,8 @@ class _SignupState extends State<Signup> {
     fetchCompanies();
   }
 
+
+
   Future<void> fetchCompanies() async{
     try {
       final QuerySnapshot result = await FirebaseFirestore.instance
@@ -118,6 +122,7 @@ class _SignupState extends State<Signup> {
 
     }
   }
+
 
   Future<void> _uploadImagesToFirebaseStorage() async {
     _imageUrls.clear();  // Clear previous URLs
@@ -218,8 +223,6 @@ class _SignupState extends State<Signup> {
       _showError('An error occurred: ${e.toString()}');
     }
   }
-
-
 
 
   @override
@@ -459,7 +462,7 @@ class _SignupState extends State<Signup> {
                               controller: email,
                               enableSuggestions: true,
                               autocorrect: true,
-                              keyboardType: false ? TextInputType.text : TextInputType.emailAddress,
+                              keyboardType: TextInputType.emailAddress,
                               decoration: InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(
                                     vertical: screenHeight / 70,
@@ -672,7 +675,7 @@ class _SignupState extends State<Signup> {
               ),
             ],
           ),
-        
+
         // TextField(
               //   controller: email,
               //   decoration: InputDecoration(hintText: "Enter Email"),
