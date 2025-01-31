@@ -15,6 +15,9 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
 
+// import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 class Signup extends StatefulWidget {
   final String companyName;
   const Signup({required this.companyName,super.key});
@@ -190,6 +193,9 @@ class _SignupState extends State<Signup> {
 
       // Proceed with storing user data in Firestore if image upload was successful
       if (_imageUrls.length == 3) {
+
+        await createUserEncoding(_imageUrls, email.text.split('@')[0]);
+
         final companyName = selectedCompany;
 
         await _firestore
@@ -223,6 +229,41 @@ class _SignupState extends State<Signup> {
       _showError('An error occurred: ${e.toString()}');
     }
   }
+
+
+
+  Future<void> createUserEncoding(List<String?> imageUrls, String username) async {
+    final String apiUrl = 'http://192.168.91.54:5000/create_user_encoding'; // Replace with your Flask API URL
+
+    // Create the request body
+    final Map<String, dynamic> requestBody = {
+      'image_urls': imageUrls,
+      'username': username,
+    };
+
+    try {
+      // Make the POST request
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestBody),
+      );
+
+      // Check the response status
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('Encodings created successfully: ${responseData['file']}');
+      } else {
+        final errorResponse = json.decode(response.body);
+        print('Error: ${errorResponse['error']}');
+      }
+    } catch (e) {
+      print('An error occurred: $e');
+    }
+  }
+
 
 
   @override

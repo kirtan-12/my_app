@@ -1,3 +1,4 @@
+
 import 'package:AttendEase/Admin/searchpage.dart';
 import 'package:AttendEase/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';

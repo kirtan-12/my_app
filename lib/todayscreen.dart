@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:AttendEase/leaverequestuser.dart';
 import 'package:AttendEase/login.dart';
 import 'package:AttendEase/model/user.dart';
@@ -28,7 +30,7 @@ class _TodayscreenState extends State<Todayscreen> {
   // final TimeOfDay checkInStartTime = TimeOfDay(hour: 9, minute: 0);
   // final TimeOfDay checkOutEndTime = TimeOfDay(hour: 23, minute: 0);
   final DateTime designatedCheckInTime = DateTime(DateTime.now().year,
-      DateTime.now().month, DateTime.now().day, 9, 00); // 9:00 AM
+      DateTime.now().month, DateTime.now().day, 09, 00); // 9:00 AM
   final DateTime designatedCheckOutTime = DateTime(DateTime.now().year,
       DateTime.now().month, DateTime.now().day, 23, 30); // 6:00 PM
 
@@ -38,6 +40,7 @@ class _TodayscreenState extends State<Todayscreen> {
   Color primary = const Color(0xFFEF444C);
 
   String _username = '';
+  String _email = '';
   String checkIn = "--/--";
   String checkOut = "--/--";
   String location = " ";
@@ -321,7 +324,9 @@ class _TodayscreenState extends State<Todayscreen> {
     }
 
     if (checkOut != "--/--") {
-      if (distance < 500) {
+      if (distance < 500 &&
+          (snap2['checkin_identity'] == snap2['checkout_identity']) &&
+          (snap2['checkout_identity'] == _email.split('@')[0])) {
         // Mark as present
         await FirebaseFirestore.instance
             .collection("RegisteredCompany")
@@ -460,9 +465,11 @@ class _TodayscreenState extends State<Todayscreen> {
 
       if (userDoc.exists) {
         final username = userDoc.data()?['first_name'];
+        final email = userDoc.data()?['email'];
         print("Welcome $username");
         setState(() {
           _username = username ?? ''; // Update _username here
+          _email = email ?? '';
         });
       } else {
         Fluttertoast.showToast(msg: "User data not found");
@@ -506,11 +513,13 @@ class _TodayscreenState extends State<Todayscreen> {
 
   Future<String> _uploadImage(String imagePath) async {
     File file = File(imagePath);
-    String fileName = 'attendance_images/${FirebaseAuth.instance.currentUser!.email}/${DateTime.now().millisecondsSinceEpoch}.png';
+    String fileName =
+        'attendance_images/${FirebaseAuth.instance.currentUser!.email}/${DateTime.now().millisecondsSinceEpoch}.png';
 
     try {
       await FirebaseStorage.instance.ref(fileName).putFile(file);
-      String downloadUrl = await FirebaseStorage.instance.ref(fileName).getDownloadURL();
+      String downloadUrl =
+          await FirebaseStorage.instance.ref(fileName).getDownloadURL();
       return downloadUrl; // Return the download URL
     } catch (e) {
       Fluttertoast.showToast(msg: "Error uploading image: $e");
@@ -566,7 +575,6 @@ class _TodayscreenState extends State<Todayscreen> {
       ),
     );
   }
-
 
   Widget _buildStatusHeader() {
     return Container(
@@ -704,6 +712,53 @@ class _TodayscreenState extends State<Todayscreen> {
           );
   }
 
+  Future<String> verifyUser(String imageUrl) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+          'http://192.168.123.54:5000/verify'), // Adjust URL based on deployment
+    );
+
+    // Add the image URL to the request
+    request.fields['image_url'] = imageUrl;
+    request.fields['username'] = _email.split('@')[0];
+
+    var response = await request.send();
+    var responseData = await http.Response.fromStream(response);
+
+    if (response.statusCode == 200) {
+      var data = json.decode(responseData.body);
+      return data['matches'].toString(); // This will return a string representation of the list
+    } else {
+      throw Exception('Failed to verify user');
+    }
+  }
+
+  // gets the distance between company and the user
+  Future<double> getDistanceFromCompany() async {
+    // Get the user's current location
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    // Get the company's stored location from Firestore
+    final companyDoc = await FirebaseFirestore.instance
+        .collection('RegisteredCompany')
+        .doc(widget.companyName)
+        .get();
+    final companyLocation = companyDoc.data()!['Location'];
+
+    // Calculate the distance between the user's location and the company's location
+    double distance = Geolocator.distanceBetween(
+      position.latitude,
+      position.longitude,
+      companyLocation.latitude,
+      companyLocation.longitude,
+    );
+
+    return distance;
+  }
+
   Future<void> _handleSlideAction(GlobalKey<SlideActionState> key) async {
     // Check if it's a weekend (uncomment when ready)
     // if (_isWeekend()) {
@@ -724,36 +779,73 @@ class _TodayscreenState extends State<Todayscreen> {
       Fluttertoast.showToast(msg: "Please enable location services");
       return;
     }
-
-    // Capture the photo
-    final ImagePicker _picker = ImagePicker();
-
-    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
-
-    if (photo != null) {
-      String imageUrl = await _uploadImage(photo.path); // Upload the image to Firestore
-
-      // Check location and handle check-in/check-out
-      if (Users.lat != 0) {
-        _getLocation();
-        await _updateCheckInOut(key, imageUrl);
+    double dis = await getDistanceFromCompany();
+    // Check location and handle check-in/check-out
+    if (Users.lat != 0) {
+      if (dis > 500) {
+        Fluttertoast.showToast(msg: "Not Allowed");
       } else {
-        Timer(const Duration(seconds: 3), () async {
-          _getLocation();
-          await _updateCheckInOut(key, imageUrl);
-        });
+        // Capture the photo
+        final ImagePicker _picker = ImagePicker();
+
+        final XFile? photo =
+            await _picker.pickImage(source: ImageSource.camera);
+        if (photo != null) {
+          // Process the image using Google ML Kit
+          final inputImage = InputImage.fromFilePath(photo.path);
+          final faceDetector = GoogleMlKit.vision.faceDetector();
+          final faces = await faceDetector.processImage(inputImage);
+
+          if (faces.isNotEmpty) {
+            String imageUrl = await _uploadImage(photo.path); // Upload the image to Firestore
+
+            await _updateCheckInOut(key, imageUrl);
+            _getLocation();
+          } else {
+            Fluttertoast.showToast(msg: "No face detected. Please try again.");
+          }
+        } else {
+          Fluttertoast.showToast(msg: "Photo capture failed");
+        }
       }
     } else {
-      Fluttertoast.showToast(msg: "Photo capture failed");
+      Timer(const Duration(seconds: 3), () async {
+        double newdis = await getDistanceFromCompany();
+        if (newdis > 500) {
+          Fluttertoast.showToast(msg: "Not Allowed");
+        } else {
+          final ImagePicker _picker = ImagePicker();
+
+          final XFile? photo =
+              await _picker.pickImage(source: ImageSource.camera);
+          if (photo != null) {
+            // Process the image using Google ML Kit
+            final inputImage = InputImage.fromFilePath(photo.path);
+            final faceDetector = GoogleMlKit.vision.faceDetector();
+            final faces = await faceDetector.processImage(inputImage);
+
+            if (faces.isNotEmpty) {
+              String imageUrl = await _uploadImage(photo.path); // Upload the image to Firestore
+
+              await _updateCheckInOut(key, imageUrl);
+              _getLocation();
+            } else {
+              Fluttertoast.showToast(msg: "No face detected. Please try again.");
+            }
+          } else {
+            Fluttertoast.showToast(msg: "Photo capture failed");
+          }
+        }
+      });
     }
   }
 
-
-
-  Future<void> _updateCheckInOut(GlobalKey<SlideActionState> key, String imageUrl) async {
+  Future<void> _updateCheckInOut(
+      GlobalKey<SlideActionState> key, String imageUrl) async {
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
 
+    String userIdentity = await verifyUser(imageUrl);
 
     QuerySnapshot snap = await FirebaseFirestore.instance
         .collection("RegisteredCompany")
@@ -774,6 +866,7 @@ class _TodayscreenState extends State<Todayscreen> {
           .get();
 
       try {
+
         String checkIn = snap2['checkIn'];
         setState(() {
           checkOut = DateFormat('hh:mm').format(DateTime.now());
@@ -793,8 +886,9 @@ class _TodayscreenState extends State<Todayscreen> {
           'date': Timestamp.now(),
           'checkIn': checkIn,
           'checkOut': DateFormat('hh:mm').format(DateTime.now()),
-          'checkOut_location': location,
-          'Out_photoUrl': imageUrl, // Add the photo URL here
+          //'checkOut_location': location,
+          //'Out_photoUrl': imageUrl, // Add the photo URL here
+          'checkout_identity': userIdentity,
           if (isEarlyExit) 'early_exit': 'Early Exit',
         });
       } catch (e) {
@@ -816,8 +910,9 @@ class _TodayscreenState extends State<Todayscreen> {
           'date': Timestamp.now(),
           'checkIn': DateFormat('hh:mm').format(DateTime.now()),
           'checkOut': "--/--",
-          'checkIn_location': location,
-          'In_photoUrl': imageUrl, // Add the photo URL here
+          //'checkIn_location': location,
+          //'In_photoUrl': imageUrl, // Add the photo URL here
+          'checkin_identity': userIdentity,
           if (isLateEntry) 'late_entry': 'Late Entry',
         });
       }
